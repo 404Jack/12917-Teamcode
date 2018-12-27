@@ -120,7 +120,7 @@ public class TeleOp extends LinearOpMode {
             }
 
             if (gamepad1.left_bumper) {
-                intakeSlideMotor.setTargetPosition(400);
+                intakeSlideMotor.setTargetPosition(-700);
                 intakeSlideMotor.setPower(-0.4);
             }
 
