@@ -9,12 +9,10 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.vuforia.VuMarkTarget;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -48,12 +46,11 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name= "Crater Side Autonomous" , group="Autonomous")
 public class Crater_Autonomous extends LinearOpMode {
 
-    private static final String VUFORIA_KEY = "AapGrWL/////AAABmcifLBT1TUVhnZ+aTQGdBWIQHnHyHcTkFs/6OO3kzCjZLbWbrhfdOvpvqk9ZRVLxHD2QdGopI8FItrMYZq2WQG+Oy/6xBf4sOERU+LskJkrZfHowrbQ6t7UxwuQtl9lUiZeSNb4TFfJraieCeKxQOQP8ULkOXIdjn+57WtwqKEKKNB8WftNLc0Uq1+uHZnoZsIYt7Vjg/SB19frlKYKM5bbXKhj8gDje5ttns70vpz/Ry1gJl9v+B+WcLxjeUsy7w5Hmj+4373IbuSEOsPwjRwJC3HJiDBHKpCwH1QWnRo8jWzBfGqKRGKxsTBGMpm5yJsi3jxTfa/HmQtXvR8drycE1/e/nANiyH1Cy33iEohHq";
+    private static final String VUFORIA_KEY = "AXK9WW//////AAAAGdQTwOT6w0S8mkoY5OeIBdAytqD4UXHQwMfLLDo58dsWQw8kG7ITAMoYBNDXQw3yF8uOzoI9PIZfm5jkcaJpQ2gBY/gKPsit0vDr/xRt50mHEM5PkIxfWSggLYX/3fF2eDAgBXshBJdSnGyH5vQcK+o20oLNY+J3xLB/j9lZjzQBydcJaOFP3WIV0KxqsqNqnsEKIUzBTRA/07S/YVr/90PQ0Spn5HvVS0qLDIB5Fjv5klAFe6iEbM9CfJHq5XZkKjMSU9kwDJDOW2asBXtkH62sq7yS1vh+WnEM+cyKLGk3A4pYVhz5EtE3Fhi08yECN/mbBVTzo7rW4Yz6olvmWw7FPgEKdDhCa8F0NlhaC1s4";
 
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
     private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
     private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
-
 
     // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
     // We will define some constants and conversions here
@@ -61,6 +58,9 @@ public class Crater_Autonomous extends LinearOpMode {
     private static final float mmFTCFieldWidth = (12 * 6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
     private static final float mmTargetHeight = (6) * mmPerInch;          // the height of the center of the target image above the floor
 
+    // Select which camera you want use.  The FRONT camera is the one on the same side as the screen.
+    // Valid choices are:  BACK or FRONT
+    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = FRONT;
 
     private OpenGLMatrix lastLocation = null;
     private boolean targetVisible = false;
@@ -92,6 +92,10 @@ public class Crater_Autonomous extends LinearOpMode {
     public DistanceSensor distanceSensorRight = null;
     public Servo craterArmServo = null;
 
+    public double dist1;
+    public double dist2;
+    public double heading = 0;
+    public double sensorHeading = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -157,27 +161,29 @@ public class Crater_Autonomous extends LinearOpMode {
 
         waitForStart();
 
-        //LowerIntake();
+       // LowerIntake();
 
-        //LowerFromLander();
+       // LowerFromLander();
 
-        //ResetLift();
+       // ResetLift();
 
-        //ResetIntake();
+       // ResetIntake();
 
-        //LeftGyroTurn(43, 0.2);
+       // DriveForward(300, 0.9 );
 
-        telemetry.addData("test", "");
-        telemetry.update();
-        ScoreMineral();
+      //  RightTurn(750, 0.9);
 
-        //ResetIntake();
+       // DriveBackwards(800,0.7);
 
-        //
-        //
-        //
-        //
-        // LynchpinReset();
+       // LeftTurn(400, 0.6);
+
+       // CheckLeftMineral();
+
+        returnMineralPositionCenter();
+
+        ResetIntake();
+
+        LynchpinReset();
 
         stop();
         telemetry.addData("Status", "Ready!!!");
@@ -188,93 +194,78 @@ public class Crater_Autonomous extends LinearOpMode {
     //METHOD SECTION
 
     //Drive Methods
-    public void DriveForward(int distance, double speed) {
+    public void DriveForward(int distance , double speed){
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-        }
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
-
-    public void DriveBackwards(int distance, double speed) {
+    public void DriveBackwards(int distance, double speed){
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-        }
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
-
-    public void LeftTurn(int distance, double speed) {
+    public void LeftTurn(int distance,double speed){
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-        }
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
-
-    public void RightTurn(int distance, double speed) {
+    public void RightTurn(int distance , double speed){
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-        }
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
 
     //Standard Functions
-    public void LowerFromLander() {
+    public void LowerFromLander(){
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         lynchpin.setTargetPosition(lynchpin.getCurrentPosition() + 525);
-        lynchpin.setPower(1);
         liftMotor.setPower(-0.8);
-        while (lynchpin.isBusy() && opModeIsActive()) {
-        }
-
+        lynchpin.setPower(1);
+        while (lynchpin.isBusy()&& opModeIsActive()){}
 
         //Let robot down
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         liftMotor.setPower(.1);
-        sleep(1600);
+        sleep (1600);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         liftMotor.setTargetPosition(liftMotor.getCurrentPosition() + 150);
         liftMotor.setPower(0.4);
-        while (liftMotor.isBusy() && opModeIsActive()) {
-        }
+        while (liftMotor.isBusy() && opModeIsActive()){}
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 400);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 400);
         leftDrive.setPower(0.8);
         rightDrive.setPower(0.8);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-        }
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
-
     public void LowerIntake() {
         intakeFold.setTargetPosition(intakeFold.getCurrentPosition() + 400);
         intakeFold.setPower(0.5);
         while (intakeFold.isBusy() && opModeIsActive()) {
         }
     }
-
-    public void ScoreMineral() {
-        int mineralPosition = returnMineralPosition();
+    public void CheckLeftMineral(){
+        int mineralPosition = returnMineralPositionLeft();
         telemetry.addData("Object is on the,", mineralPosition);
         telemetry.update();
     }
 
-    public void ResetLift() {
+    public void ResetLift(){
         liftMotor.setTargetPosition(0);
         liftMotor.setPower(0.9);
-        while (liftMotor.isBusy() && opModeIsActive()) {
-        }
+        while (liftMotor.isBusy() && opModeIsActive()){}
     }
-
     public void DropMarker() {
         leftLiftServo.setPosition(0.7);
         rightLiftServo.setPosition(0.3);
@@ -282,29 +273,92 @@ public class Crater_Autonomous extends LinearOpMode {
         leftLiftServo.setPosition(0);
         rightLiftServo.setPosition(1);
     }
-
     public void ResetIntake() {
         intakeFold.setTargetPosition(0);
         intakeFold.setPower(0.4);
         while (intakeFold.isBusy() && opModeIsActive()) {
         }
     }
-
-    public void LynchpinReset() {
+    public void LynchpinReset(){
         lynchpin.setTargetPosition(0);
         lynchpin.setPower(1);
-        while (lynchpin.isBusy() && opModeIsActive()) {
-        }
+        while (lynchpin.isBusy()&& opModeIsActive()){}
     }
-
 
     //Gyro Methods
-    public void RightGyroTurn(double degrees, double speed) {
+    public void resetGyro() {
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double currentHeading = AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle);
+        sensorHeading = currentHeading;
+        heading = 0;
+    }
+    public double getHeading() {
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double currentHeading = AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle);
+        double delta = currentHeading - sensorHeading;
+        if(delta < -180)
+        {
+            delta += 360;
+        }
+        else if(delta >= 180)
+        {
+            delta -=360;
+        }
+        heading += delta;
+        sensorHeading = currentHeading;
+        return heading;
+    }
+
+
+    public void GyroTurn( double degrees, double speed) {
+        resetGyro();
+
+        boolean Left = degrees > 0;
+        double LeftSpeed = speed;
+        double RightSpeed = speed;
+
+
+        telemetry.addData("heading", heading);
+        telemetry.update();
+        sleep(1000);
+        if (Left){
+            LeftSpeed = LeftSpeed * -1;
+        }
+        else {
+            RightSpeed = RightSpeed * -1;
+        }
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftDrive.setPower(LeftSpeed);
+        rightDrive.setPower(RightSpeed);
+        while (Math.abs(getHeading())< Math.abs(degrees) - 6 && opModeIsActive()) {
+
+            if (Math.abs(degrees)-Math.abs(getHeading()) < 30){
+                if (Left) {
+                    leftDrive.setPower(-0.35);
+                    rightDrive.setPower(0.35);
+
+                }
+                else {
+                    leftDrive.setPower(0.35);
+                    rightDrive.setPower(-0.35);
+                }
+
+            }
+
+            telemetry.addData("heading", heading);
+            telemetry.update();
+
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+    }
+    public void RightGyroTurn(double degrees , double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 8000);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 8000);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > -degrees + 5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > -degrees+5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
@@ -320,13 +374,12 @@ public class Crater_Autonomous extends LinearOpMode {
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
-
-    public void NegativeRightGyroTurn(double degrees, double speed) {
+    public void NegativeRightGyroTurn(double degrees , double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 8000);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 8000);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) < -degrees + 5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) < -degrees+5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
@@ -342,13 +395,12 @@ public class Crater_Autonomous extends LinearOpMode {
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
-
-    public void LeftGyroTurn(double degrees, double speed) {
+    public void LeftGyroTurn(double degrees , double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 8000);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 8000);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) < degrees - 5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) < degrees-5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
@@ -364,13 +416,12 @@ public class Crater_Autonomous extends LinearOpMode {
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
-
-    public void NegativeLeftGyroTurn(double degrees, double speed) {
+    public void NegativeLeftGyroTurn(double degrees , double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 8000);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 8000);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > degrees - 5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > degrees-5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
@@ -386,15 +437,13 @@ public class Crater_Autonomous extends LinearOpMode {
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
-
     public void ResetGyro() {
         imu.startAccelerationIntegration(new Position(), new Velocity(), 50);
         imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
     }
-
-    public void CenterMineralAdjustment() {
+    public void CenterMineralAdjustment(){
         double Lcorrect = distanceSensorLeft.getDistance(DistanceUnit.MM) - 857;
         double Rcorrect = distanceSensorRight.getDistance(DistanceUnit.MM) - 857;
         double preHypotenuse = (Lcorrect * Lcorrect) + (Rcorrect * Rcorrect);
@@ -417,10 +466,8 @@ public class Crater_Autonomous extends LinearOpMode {
                 }
             });
             telemetry.update();
-        }
-    }
-
-    public void LeftMineralAdjustment() {
+        }}
+    public void LeftMineralAdjustment(){
         double Lcorrect = distanceSensorLeft.getDistance(DistanceUnit.MM) - 594;
         double Rcorrect = distanceSensorRight.getDistance(DistanceUnit.MM) - 1120;
         double preHypotenuse = (Lcorrect * Lcorrect) + (Rcorrect * Rcorrect);
@@ -443,10 +490,8 @@ public class Crater_Autonomous extends LinearOpMode {
                 }
             });
             telemetry.update();
-        }
-    }
-
-    public void RightMineralAdjustment() {
+        }}
+    public void RightMineralAdjustment(){
         double Lcorrect = distanceSensorLeft.getDistance(DistanceUnit.MM) - 1120;
         double Rcorrect = distanceSensorRight.getDistance(DistanceUnit.MM) - 594;
         double preHypotenuse = (Lcorrect * Lcorrect) + (Rcorrect * Rcorrect);
@@ -469,17 +514,14 @@ public class Crater_Autonomous extends LinearOpMode {
                 }
             });
             telemetry.update();
-        }
-    }
-
-    public void craterArmDeploy() {
+        }}
+    public void craterArmDeploy(){
 
 
         craterArmServo.setPosition(0.5);
     }
-
     //Mode set Protocols
-    public void SetModeRUN_TO_POSITION() {
+    public void SetModeRUN_TO_POSITION(){
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intakeSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -495,8 +537,7 @@ public class Crater_Autonomous extends LinearOpMode {
         sweeperMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         lynchpin.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
-
-    public void SetZeroPowerBrake() {
+    public void SetZeroPowerBrake(){
         liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeFold.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -507,65 +548,57 @@ public class Crater_Autonomous extends LinearOpMode {
 
         // At the beginning of each telemetry update, grab a bunch of data
         // from the IMU that we will then display in separate lines.
-        telemetry.addAction(new Runnable() {
-            @Override
-            public void run() {
-                // Acquiring the angles is relatively expensive; we don't want
-                // to do that in each of the three items that need that info, as that's
-                // three times the necessary expense.
-                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-                gravity = imu.getGravity();
-            }
+        telemetry.addAction(new Runnable() { @Override public void run()
+        {
+            // Acquiring the angles is relatively expensive; we don't want
+            // to do that in each of the three items that need that info, as that's
+            // three times the necessary expense.
+            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            gravity  = imu.getGravity();
+        }
         });
 
         telemetry.addLine()
                 .addData("status", new Func<String>() {
-                    @Override
-                    public String value() {
+                    @Override public String value() {
                         return imu.getSystemStatus().toShortString();
                     }
                 })
                 .addData("calib", new Func<String>() {
-                    @Override
-                    public String value() {
+                    @Override public String value() {
                         return imu.getCalibrationStatus().toString();
                     }
                 });
 
         telemetry.addLine()
                 .addData("heading", new Func<String>() {
-                    @Override
-                    public String value() {
+                    @Override public String value() {
                         return formatAngle(angles.angleUnit, angles.firstAngle);
                     }
                 })
                 .addData("roll", new Func<String>() {
-                    @Override
-                    public String value() {
+                    @Override public String value() {
                         return formatAngle(angles.angleUnit, angles.secondAngle);
                     }
                 })
                 .addData("pitch", new Func<String>() {
-                    @Override
-                    public String value() {
+                    @Override public String value() {
                         return formatAngle(angles.angleUnit, angles.thirdAngle);
                     }
                 });
 
         telemetry.addLine()
                 .addData("grvty", new Func<String>() {
-                    @Override
-                    public String value() {
+                    @Override public String value() {
                         return gravity.toString();
                     }
                 })
                 .addData("mag", new Func<String>() {
-                    @Override
-                    public String value() {
+                    @Override public String value() {
                         return String.format(Locale.getDefault(), "%.3f",
-                                Math.sqrt(gravity.xAccel * gravity.xAccel
-                                        + gravity.yAccel * gravity.yAccel
-                                        + gravity.zAccel * gravity.zAccel));
+                                Math.sqrt(gravity.xAccel*gravity.xAccel
+                                        + gravity.yAccel*gravity.yAccel
+                                        + gravity.zAccel*gravity.zAccel));
                     }
                 });
     }
@@ -578,12 +611,18 @@ public class Crater_Autonomous extends LinearOpMode {
         return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
     }
 
-    String formatDegrees(double degrees) {
+    String formatDegrees(double degrees){
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
+    private void initTfod() {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+    }
 
-
-    public int returnMineralPosition() {
+    public int returnMineralPositionLeft() {
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
         initVuforia();
@@ -598,26 +637,23 @@ public class Crater_Autonomous extends LinearOpMode {
         /** Wait for the game to begin */
         telemetry.addData(">", "Press Play to start tracking");
         telemetry.update();
+        waitForStart();
 
 
+        if (opModeIsActive()) {
             /** Activate Tensor Flow Object Detection. */
             if (tfod != null) {
                 tfod.activate();
-
-            }
-            else {
-                log("!working");
             }
 
             while (opModeIsActive()) {
-
                 if (tfod != null) {
                     // getUpdatedRecognitions() will return null if no new information is available since
                     // the last time that call was made.
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                     if (updatedRecognitions != null) {
-                        log("Size: "+updatedRecognitions.size());
-                       /* if (updatedRecognitions.size() == 1) {
+                        telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        if (updatedRecognitions.size() == 1) {
                             int goldMineralX = -1;
                             int silverMineral1X = -1;
                             int silverMineral2X = -1;
@@ -630,203 +666,154 @@ public class Crater_Autonomous extends LinearOpMode {
                                     silverMineral2X = (int) recognition.getLeft();
                                 }
                             }
-                            if (goldMineralX < 200) {
-                                telemetry.addData("Gold Mineral Position", "Center");
-                                DriveForward(100, 0.5);
-                                telemetry.addData("gold mineral", goldMineralX);
-                                telemetry.update();
-                                while (opModeIsActive()) ;
-                                {
-                                    telemetry.addData("Gold MineralX", goldMineralX);
-                                    telemetry.update();
-                                }
+                            if (goldMineralX != -1 && silverMineral1X == -1) {
+                                ///LEFT
 
-                                CenterMineralAdjustment();
-
-                                LeftGyroTurn(2, 0.2);
-
-                                DriveForward(2300, 0.9);
-
-                                craterArmDeploy();
-
-                                return result;
-                            } else if (goldMineralX > 200 & goldMineralX < 550) {
                                 telemetry.addData("Gold Mineral Position", "Left");
-                                DriveForward(100, 0.5);
-                                telemetry.addData("gold mineral", goldMineralX);
                                 telemetry.update();
 
-                                while (opModeIsActive()) ;
-                                {
-                                    telemetry.addData("Gold MineralX", goldMineralX);
-                                    telemetry.update();
-                                }
+                               RightTurn(200,0.8);
 
-
-                                CenterMineralAdjustment();
-
-                                LeftGyroTurn(75, 0.2);
-
-                                DriveForward(2500, 0.9);
-
-                                craterArmDeploy();
-
-                                return result;
-                            } else if (goldMineralX < 550) {
-
-                                telemetry.addData("Gold Mineral Position", "Right");
-                                DriveForward(100, 0.5);
-                                telemetry.addData("gold mineral", goldMineralX);
-                                telemetry.update();
-
-                                while (opModeIsActive()) ;
-                                {
-                                    telemetry.addData("Gold MineralX", goldMineralX);
-                                    telemetry.update();
-                                }
-
-
-                                CenterMineralAdjustment();
-
-                                LeftGyroTurn(75, 0.2);
-
-                                DriveForward(2500, 0.9);
-
-                                craterArmDeploy();
-
-                                return result;
-                            }
-*/
-                    if (updatedRecognitions.size() == 2) {
-                        int goldMineralX = -1;
-                        int silverMineral1X = -1;
-                        int silverMineral2X = -1;
-                        for (Recognition recognition : updatedRecognitions) {
-                            if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                                goldMineralX = (int) recognition.getLeft();
-                            } else if (silverMineral1X == -1) {
-                                silverMineral1X = (int) recognition.getLeft();
-                            } else {
-                                silverMineral2X = (int) recognition.getLeft();
-                            }
-                        }
-                        if (goldMineralX == -1 && silverMineral1X != -1 && silverMineral2X != -1) {
-                            telemetry.addData("Gold Mineral Position", "Right");
-
-                            DriveForward(100, 0.5);
-
-                            LeftGyroTurn(43, 0.2);
-
-                            CenterMineralAdjustment();
-
-                            RightGyroTurn(-10, 0.2);
-
-                            DriveForward(2700, 0.8);
-
-                            craterArmDeploy();
-
-                            return result;
-
-                        } else if (goldMineralX != -1 && silverMineral1X != -1) {
-
-
-                            if (goldMineralX > silverMineral1X) {
-                                telemetry.addData("Gold Mineral Position", "Center");
-                                DriveForward(100, 0.5);
+                                DriveForward(800, 0.5);
 
                                 LeftGyroTurn(43, 0.2);
 
                                 CenterMineralAdjustment();
 
-                                LeftGyroTurn(2, 0.2);
+                                LeftGyroTurn(75, 0.2);
+
+                                DriveForward(2900, 0.9);
+
+                                craterArmDeploy();
+
+                                stop();
+
+                                return result;
+                            }
+                            else {
+                                RightTurn(200, 0.8);
+                                DriveForward(500, 0.7);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        if (tfod != null) {
+            tfod.shutdown();
+        }
+        return result;
+    }
+
+    public int returnMineralPositionCenter() {
+        // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
+        // first.
+        initVuforia();
+        int result = 0;
+
+        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
+            initTfod();
+        } else {
+            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
+        }
+
+        /** Wait for the game to begin */
+        telemetry.addData(">", "Press Play to start tracking");
+        telemetry.update();
+        waitForStart();
+
+
+        if (opModeIsActive()) {
+            /** Activate Tensor Flow Object Detection. */
+            if (tfod != null) {
+                tfod.activate();
+            }
+
+            while (opModeIsActive()) {
+                if (tfod != null) {
+                    // getUpdatedRecognitions() will return null if no new information is available since
+                    // the last time that call was made.
+                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                    if (updatedRecognitions != null) {
+                        telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        if (updatedRecognitions.size() == 1) {
+                            int goldMineralX = -1;
+                            int silverMineral1X = -1;
+                            int silverMineral2X = -1;
+                            for (Recognition recognition : updatedRecognitions) {
+                                if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                                    goldMineralX = (int) recognition.getLeft();
+                                } else if (silverMineral1X == -1) {
+                                    silverMineral1X = (int) recognition.getLeft();
+                                } else {
+                                    silverMineral2X = (int) recognition.getLeft();
+                                }
+                            }
+                            if (goldMineralX != -1 && silverMineral1X == -1) {
+                                telemetry.addData("Gold Mineral Position", "Center");
+                                telemetry.update();
+
+                                DriveForward(100, 0.5);
+
+                                LeftGyroTurn(40, 0.2);
 
                                 DriveForward(2300, 0.9);
 
                                 craterArmDeploy();
 
+                                stop();
+
                                 return result;
-                            } else
-                                telemetry.addData("Gold Mineral Position", "Left");
-                            DriveForward(100, 0.5);
+                            } else if (goldMineralX == -1 && silverMineral1X != -1) {
+                                telemetry.addData("Gold Mineral Position", "Right");
+                                telemetry.update();
 
-                            LeftGyroTurn(43, 0.2);
+                                DriveForward(100, 0.5);
 
-                            CenterMineralAdjustment();
+                                LeftGyroTurn(43, 0.2);
 
-                            LeftGyroTurn(75, 0.2);
+                                RightGyroTurn(-10, 0.2);
 
-                            DriveForward(2500, 0.9);
+                                DriveForward(2700, 0.8);
 
-                            craterArmDeploy();
+                                craterArmDeploy();
 
-                            return result;
+                                stop();
+
+                                return result;
+                            }
                         }
-                    }/* else if (updatedRecognitions.size() == 0) {
-                        telemetry.addData("Gold Mineral Position", "Right");
-
-                        DriveForward(100, 0.5);
-
-                        sleep(5000);
-
-                        CenterMineralAdjustment();
-
-                        RightGyroTurn(-10, 0.2);
-
-
-                        craterArmDeploy();
-
-                        return result;
-
                     }
                 }
-                */
-                    }
-                    telemetry.update();
-
-
-//                    if (tfod != null) {
-//                        tfod.shutdown();
-//                    }
-
-                }
-
             }
-
-
-        return result;
-    }
-        /**
-         * Initialize the Vuforia localization engine.
-         */
-        private void initVuforia() {
-            /*
-             * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-             */
-            VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-            parameters.vuforiaLicenseKey = VUFORIA_KEY;
-            parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-
-            //  Instantiate the Vuforia engine
-            vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-            // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
         }
 
+
+        if (tfod != null) {
+            tfod.shutdown();
+        }
+        return result;
+    }
     /**
-     * Initialize the Tensor Flow Object Detection engine.
+     * Initialize the Vuforia localization engine.
      */
-    private void initTfod() {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL,LABEL_SILVER_MINERAL);
+    private void initVuforia() {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         */
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
     }
 
-    private void log (String v){
-        telemetry.addData("LOG", v);
-        telemetry.update();
-    }
+
 
 }
