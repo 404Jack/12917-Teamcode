@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import com.disnodeteam.dogecv.CameraViewDisplay;
+import com.disnodeteam.dogecv.DogeCV;
+import com.disnodeteam.dogecv.Dogeforia;
+import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -13,6 +17,7 @@ import com.vuforia.VuMarkTarget;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -46,37 +51,17 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name= "Crater Side Autonomous" , group="Autonomous")
 public class Crater_Autonomous extends LinearOpMode {
 
-    private static final String VUFORIA_KEY = "AXK9WW//////AAAAGdQTwOT6w0S8mkoY5OeIBdAytqD4UXHQwMfLLDo58dsWQw8kG7ITAMoYBNDXQw3yF8uOzoI9PIZfm5jkcaJpQ2gBY/gKPsit0vDr/xRt50mHEM5PkIxfWSggLYX/3fF2eDAgBXshBJdSnGyH5vQcK+o20oLNY+J3xLB/j9lZjzQBydcJaOFP3WIV0KxqsqNqnsEKIUzBTRA/07S/YVr/90PQ0Spn5HvVS0qLDIB5Fjv5klAFe6iEbM9CfJHq5XZkKjMSU9kwDJDOW2asBXtkH62sq7yS1vh+WnEM+cyKLGk3A4pYVhz5EtE3Fhi08yECN/mbBVTzo7rW4Yz6olvmWw7FPgEKdDhCa8F0NlhaC1s4";
+    // Detector object
+    private GoldAlignDetector detector;
+    WebcamName webcamName;
+    Dogeforia vuforia;
 
-    private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
-    private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
-    private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
-
-    // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
-    // We will define some constants and conversions here
-    private static final float mmPerInch = 25.4f;
-    private static final float mmFTCFieldWidth = (12 * 6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
-    private static final float mmTargetHeight = (6) * mmPerInch;          // the height of the center of the target image above the floor
-
-    // Select which camera you want use.  The FRONT camera is the one on the same side as the screen.
-    // Valid choices are:  BACK or FRONT
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = FRONT;
-
-    private OpenGLMatrix lastLocation = null;
-    private boolean targetVisible = false;
-
-    private TFObjectDetector tfod;
     // The IMU sensor object
     BNO055IMU imu;
 
     // State used for updating telemetry
     Orientation angles;
     Acceleration gravity;
-    /**
-     * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
-     * localization engine.
-     */
-    VuforiaLocalizer vuforia;
 
     // Declare OpMode members.
     public DcMotor leftDrive = null;
@@ -99,6 +84,7 @@ public class Crater_Autonomous extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        init_a();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -161,39 +147,123 @@ public class Crater_Autonomous extends LinearOpMode {
 
         waitForStart();
 
-       // LowerIntake();
+        LowerIntake();
 
-       // LowerFromLander();
+        LowerFromLander();
 
-       // ResetLift();
-
-       // ResetIntake();
-
-       // DriveForward(300, 0.9 );
-
-      //  RightTurn(750, 0.9);
-
-       // DriveBackwards(800,0.7);
-
-       // LeftTurn(400, 0.6);
-
-       // CheckLeftMineral();
-
-        returnMineralPositionCenter();
+        ResetLift();
 
         ResetIntake();
 
-        LynchpinReset();
+        LeftGyroTurn(43,0.3);
 
-        stop();
-        telemetry.addData("Status", "Ready!!!");
-        telemetry.update();
+        sleep(2000);
+        if (detector.getXPosition() < 0.00001) {
+            telemetry.addData("Gold Mineral Position", "Left");
+            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+            telemetry.update();
 
+            LeftGyroTurn(70,0.2);
+
+            DriveForward(3100,0.9);
+
+            craterArmDeploy();
+
+            stop();
+
+
+        }
+        else if (detector.getXPosition() < 325) {
+
+            telemetry.addData("Gold Mineral Position", "Right");
+            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+            telemetry.update();
+
+            RightGyroTurn(-15,0.2);
+
+            DriveForward(3100,0.8);
+
+            craterArmDeploy();
+
+            stop();
+
+        }
+        else if (detector.getXPosition() > 325) {
+            telemetry.addData("Gold Mineral Position", "Center");
+            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+            telemetry.update();
+
+
+            LeftGyroTurn(43, 0.2);
+
+            CenterMineralAdjustment();
+
+            DriveForward(2700, 0.9);
+
+            craterArmDeploy();
+
+            stop();
+
+        }
     }
 
-    //METHOD SECTION
 
-    //Drive Methods
+    public void init_a() {
+        webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
+
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.vuforiaLicenseKey = "AWbfTmn/////AAABmY0xuIe3C0RHvL3XuzRxyEmOT2OekXBSbqN2jot1si3OGBObwWadfitJR/D6Vk8VEBiW0HG2Q8UAEd0//OliF9aWCRmyDJ1mMqKCJZxpZemfT5ELFuWnJIZWUkKyjQfDNe2RIaAh0ermSxF4Bq77IDFirgggdYJoRIyi2Ys7Gl9lD/tSonV8OnldIN/Ove4/MtEBJTKHqjUEjC5U2khV+26AqkeqbxhFTNiIMl0LcmSSfugGhmWFGFtuPtp/+flPBRGoBO+tSl9P2sV4mSUBE/WrpHqB0Jd/tAmeNvbtgQXtZEGYc/9NszwRLVNl9k13vrBcgsiNxs2UY5xAvA4Wb6LN7Yu+tChwc+qBiVKAQe09\n";
+        parameters.fillCameraMonitorViewParent = true;
+
+        parameters.cameraName = webcamName;
+
+        vuforia = new Dogeforia(parameters);
+        vuforia.enableConvertFrameToBitmap();
+
+        telemetry.addData("Status", "DogeCV 2018.0 - Gold Align Example");
+
+        // Set up detector
+        detector = new GoldAlignDetector(); // Create detector
+        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, true);
+        // Initialize it with the app context and camera
+        detector.useDefaults(); // Set detector to use default settings
+
+        // Optional tuning
+        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+        detector.downscale = 0.4; // How much to downscale the input frames
+
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
+        detector.maxAreaScorer.weight = 0.005; //
+
+        detector.ratioScorer.weight = 5; //
+        detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
+
+        // detector.enable(); // Start the detector!
+
+        vuforia.setDogeCVDetector(detector);
+        vuforia.enableDogeCV();
+        vuforia.showDebug();
+        vuforia.start();
+    }
+
+    /*
+     * Code to run REPEATEDLY when the driver hits PLAY
+     */
+//    @Override
+//    public void loop() {
+//        telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+//        telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+//    }
+
+
     public void DriveForward(int distance , double speed){
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
@@ -243,8 +313,8 @@ public class Crater_Autonomous extends LinearOpMode {
         liftMotor.setPower(0.4);
         while (liftMotor.isBusy() && opModeIsActive()){}
 
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 400);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 400);
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 500);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 500);
         leftDrive.setPower(0.8);
         rightDrive.setPower(0.8);
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
@@ -255,11 +325,7 @@ public class Crater_Autonomous extends LinearOpMode {
         while (intakeFold.isBusy() && opModeIsActive()) {
         }
     }
-    public void CheckLeftMineral(){
-        int mineralPosition = returnMineralPositionLeft();
-        telemetry.addData("Object is on the,", mineralPosition);
-        telemetry.update();
-    }
+
 
     public void ResetLift(){
         liftMotor.setTargetPosition(0);
@@ -283,6 +349,16 @@ public class Crater_Autonomous extends LinearOpMode {
         lynchpin.setTargetPosition(0);
         lynchpin.setPower(1);
         while (lynchpin.isBusy()&& opModeIsActive()){}
+    }
+    public void IntakeResetForwardDrive(int distance , double speed) {
+        intakeFold.setTargetPosition(0);
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
+        leftDrive.setPower(speed);
+        rightDrive.setPower(speed);
+        intakeFold.setPower(0.4);
+        while (intakeFold.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() && opModeIsActive()) {
+        }
     }
 
     //Gyro Methods
@@ -614,206 +690,5 @@ public class Crater_Autonomous extends LinearOpMode {
     String formatDegrees(double degrees){
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
-    private void initTfod() {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
-    }
-
-    public int returnMineralPositionLeft() {
-        // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
-        // first.
-        initVuforia();
-        int result = 0;
-
-        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
-            initTfod();
-        } else {
-            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
-        }
-
-        /** Wait for the game to begin */
-        telemetry.addData(">", "Press Play to start tracking");
-        telemetry.update();
-        waitForStart();
-
-
-        if (opModeIsActive()) {
-            /** Activate Tensor Flow Object Detection. */
-            if (tfod != null) {
-                tfod.activate();
-            }
-
-            while (opModeIsActive()) {
-                if (tfod != null) {
-                    // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                    if (updatedRecognitions != null) {
-                        telemetry.addData("# Object Detected", updatedRecognitions.size());
-                        if (updatedRecognitions.size() == 1) {
-                            int goldMineralX = -1;
-                            int silverMineral1X = -1;
-                            int silverMineral2X = -1;
-                            for (Recognition recognition : updatedRecognitions) {
-                                if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                                    goldMineralX = (int) recognition.getLeft();
-                                } else if (silverMineral1X == -1) {
-                                    silverMineral1X = (int) recognition.getLeft();
-                                } else {
-                                    silverMineral2X = (int) recognition.getLeft();
-                                }
-                            }
-                            if (goldMineralX != -1 && silverMineral1X == -1) {
-                                ///LEFT
-
-                                telemetry.addData("Gold Mineral Position", "Left");
-                                telemetry.update();
-
-                               RightTurn(200,0.8);
-
-                                DriveForward(800, 0.5);
-
-                                LeftGyroTurn(43, 0.2);
-
-                                CenterMineralAdjustment();
-
-                                LeftGyroTurn(75, 0.2);
-
-                                DriveForward(2900, 0.9);
-
-                                craterArmDeploy();
-
-                                stop();
-
-                                return result;
-                            }
-                            else {
-                                RightTurn(200, 0.8);
-                                DriveForward(500, 0.7);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
-        if (tfod != null) {
-            tfod.shutdown();
-        }
-        return result;
-    }
-
-    public int returnMineralPositionCenter() {
-        // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
-        // first.
-        initVuforia();
-        int result = 0;
-
-        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
-            initTfod();
-        } else {
-            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
-        }
-
-        /** Wait for the game to begin */
-        telemetry.addData(">", "Press Play to start tracking");
-        telemetry.update();
-        waitForStart();
-
-
-        if (opModeIsActive()) {
-            /** Activate Tensor Flow Object Detection. */
-            if (tfod != null) {
-                tfod.activate();
-            }
-
-            while (opModeIsActive()) {
-                if (tfod != null) {
-                    // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                    if (updatedRecognitions != null) {
-                        telemetry.addData("# Object Detected", updatedRecognitions.size());
-                        if (updatedRecognitions.size() == 1) {
-                            int goldMineralX = -1;
-                            int silverMineral1X = -1;
-                            int silverMineral2X = -1;
-                            for (Recognition recognition : updatedRecognitions) {
-                                if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                                    goldMineralX = (int) recognition.getLeft();
-                                } else if (silverMineral1X == -1) {
-                                    silverMineral1X = (int) recognition.getLeft();
-                                } else {
-                                    silverMineral2X = (int) recognition.getLeft();
-                                }
-                            }
-                            if (goldMineralX != -1 && silverMineral1X == -1) {
-                                telemetry.addData("Gold Mineral Position", "Center");
-                                telemetry.update();
-
-                                DriveForward(100, 0.5);
-
-                                LeftGyroTurn(40, 0.2);
-
-                                DriveForward(2300, 0.9);
-
-                                craterArmDeploy();
-
-                                stop();
-
-                                return result;
-                            } else if (goldMineralX == -1 && silverMineral1X != -1) {
-                                telemetry.addData("Gold Mineral Position", "Right");
-                                telemetry.update();
-
-                                DriveForward(100, 0.5);
-
-                                LeftGyroTurn(43, 0.2);
-
-                                RightGyroTurn(-10, 0.2);
-
-                                DriveForward(2700, 0.8);
-
-                                craterArmDeploy();
-
-                                stop();
-
-                                return result;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
-        if (tfod != null) {
-            tfod.shutdown();
-        }
-        return result;
-    }
-    /**
-     * Initialize the Vuforia localization engine.
-     */
-    private void initVuforia() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
-    }
-
-
 
 }
