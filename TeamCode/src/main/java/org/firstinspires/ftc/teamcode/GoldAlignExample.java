@@ -58,7 +58,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 import java.util.Locale;
 
-@Autonomous(name="GoldAlign Example", group="DogeCV")
+@Autonomous(name="Depot Side Autonomous", group="DogeCV")
 
 public class GoldAlignExample extends LinearOpMode
 {
@@ -166,18 +166,105 @@ public class GoldAlignExample extends LinearOpMode
 
         ResetIntake();
 
-        while (!detector.getAligned()){
+        LeftGyroTurn(43,0.3);
+
+        if (detector.getXPosition() == 0) {
+            telemetry.addData("Gold Mineral Position", "Left");
             telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
             telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
             telemetry.update();
-            LeftTurn((int)detector.getXPosition()-280,0.1);
+
+            sleep(2000);
+
+            LeftGyroTurn(43, 0.2);
+
+            CenterMineralAdjustment();
+
+            LeftGyroTurn(70,0.2);
+
+            DriveForward(3100,0.9);
+
+            RightGyroTurn(145,0.4);
+
+            DriveBackwards(2500,0.9);
+
+            LowerIntake();
+
+            DropMarker();
+
+            sleep(400);
+
+            IntakeResetForwardDrive(600,0.9);
+
+            LeftTurn(200,1);
+
+            DriveForward(400,1);
+
+            stop();
+
 
         }
-        LeftTurn(0,0);
+        else if (detector.getXPosition() < 325) {
 
-        telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
-        telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
-        telemetry.update();
+            telemetry.addData("Gold Mineral Position", "Right");
+            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+            telemetry.update();
+
+            sleep(2000);
+
+            RightGyroTurn(-15,0.2);
+
+            DriveForward(3100,0.8);
+
+            RightGyroTurn(90,0.4);
+
+            DriveBackwards(1900,0.9);
+
+            LowerIntake();
+
+            DropMarker();
+
+            RightTurn(1800,0.7);
+
+            IntakeResetForwardDrive(1200,0.8);
+
+            LynchpinReset();
+
+            stop();
+
+        }
+        else if (detector.getXPosition() > 325) {
+            telemetry.addData("Gold Mineral Position", "Center");
+            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+            telemetry.update();
+
+            sleep(2000);
+
+            LeftGyroTurn(43, 0.2);
+
+            CenterMineralAdjustment();
+
+            DriveForward(3200, 0.9);
+
+            RightGyroTurn(135, 0.4);
+
+            DriveBackwards(1250, 0.9);
+
+            LowerIntake();
+
+            DropMarker();
+
+            sleep(400);
+
+            IntakeResetForwardDrive(600,0.9);
+
+            LeftTurn(200,1);
+
+            stop();
+
+        }
     }
 
 
@@ -319,6 +406,16 @@ public class GoldAlignExample extends LinearOpMode
         lynchpin.setTargetPosition(0);
         lynchpin.setPower(1);
         while (lynchpin.isBusy()&& opModeIsActive()){}
+    }
+    public void IntakeResetForwardDrive(int distance , double speed) {
+        intakeFold.setTargetPosition(0);
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
+        leftDrive.setPower(speed);
+        rightDrive.setPower(speed);
+        intakeFold.setPower(0.4);
+        while (intakeFold.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() && opModeIsActive()) {
+        }
     }
 
     //Gyro Methods
