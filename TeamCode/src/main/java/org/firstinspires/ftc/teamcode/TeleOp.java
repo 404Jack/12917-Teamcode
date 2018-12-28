@@ -135,28 +135,29 @@ public class TeleOp extends LinearOpMode {
 
             //Brings the lift up all the way
             if (gamepad2.y) {
-                liftMotor.setTargetPosition(4200);
+                liftMotor.setTargetPosition(3800);
                 liftMotor.setPower(0.8);
             }
 
             if (gamepad2.start) {
-                liftMotor.setTargetPosition(liftMotor.getCurrentPosition() -200);
+                liftMotor.setTargetPosition(liftMotor.getCurrentPosition() -175);
                 liftMotor.setPower(0.4);
             }
 
             //brings lift up half-way
             if (gamepad2.x) {
-                liftMotor.setTargetPosition(2000);
+                liftMotor.setTargetPosition(1900);
                 liftMotor.setPower(0.6);
             }
             //brings lift to the bottom of the slide
 
             if (gamepad2.a) {
                 liftMotor.setTargetPosition(0);
+                liftMotor.setPower(1);
             }
             //Fail Safe
             if (gamepad2.b) {
-                liftMotor.setTargetPosition(liftMotor.getCurrentPosition() + 200);
+                liftMotor.setTargetPosition(liftMotor.getCurrentPosition() + 175);
                 liftMotor.setPower(0.4);
             } //Fail Safe
 

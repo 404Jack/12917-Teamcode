@@ -158,7 +158,7 @@ public class Crater_Autonomous extends LinearOpMode {
         LeftGyroTurn(43,0.3);
 
         sleep(2000);
-        if (detector.getXPosition() < 0.00001) {
+        if (detector.getXPosition() == 0) {
             telemetry.addData("Gold Mineral Position", "Left");
             telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
             telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.

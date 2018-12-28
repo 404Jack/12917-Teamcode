@@ -44,6 +44,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name= "MethodTest" , group="Autonomous")
+@Disabled
 public class Test_Gyro_Method extends LinearOpMode {
 
     private static final String VUFORIA_KEY = "AXK9WW//////AAAAGdQTwOT6w0S8mkoY5OeIBdAytqD4UXHQwMfLLDo58dsWQw8kG7ITAMoYBNDXQw3yF8uOzoI9PIZfm5jkcaJpQ2gBY/gKPsit0vDr/xRt50mHEM5PkIxfWSggLYX/3fF2eDAgBXshBJdSnGyH5vQcK+o20oLNY+J3xLB/j9lZjzQBydcJaOFP3WIV0KxqsqNqnsEKIUzBTRA/07S/YVr/90PQ0Spn5HvVS0qLDIB5Fjv5klAFe6iEbM9CfJHq5XZkKjMSU9kwDJDOW2asBXtkH62sq7yS1vh+WnEM+cyKLGk3A4pYVhz5EtE3Fhi08yECN/mbBVTzo7rW4Yz6olvmWw7FPgEKdDhCa8F0NlhaC1s4";
