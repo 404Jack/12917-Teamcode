@@ -1,21 +1,51 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode;/* Copyright (c) 2017 FIRST. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted (subject to the limitations in the disclaimer below) provided that
+ * the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list
+ * of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice, this
+ * list of conditions and the following disclaimer in the documentation and/or
+ * other materials provided with the distribution.
+ *
+ * Neither the name of FIRST nor the names of its contributors may be used to endorse or
+ * promote products derived from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
+ * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
-
+import com.disnodeteam.dogecv.ActivityViewDisplay;
+import com.disnodeteam.dogecv.CameraViewDisplay;
+import com.disnodeteam.dogecv.DogeCV;
+import com.disnodeteam.dogecv.Dogeforia;
+import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
+import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ReadWriteFile;
-import com.vuforia.VuMarkTarget;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -23,66 +53,26 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaRoverRuckus;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
-import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
-import static java.lang.Math.sqrt;
-import static java.lang.Math.acos;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.Locale;
 
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
+@Autonomous(name="Depot Side Autonomous", group="DogeCV")
 
+public class Depot_Autonomous extends LinearOpMode
+{
+    // Detector object
+    private GoldAlignDetector detector;
+    WebcamName webcamName;
+    Dogeforia vuforia;
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name= "Depot Side Autonomous" , group="Autonomous")
-@Disabled
-public class Depot_Autonomous extends LinearOpMode {
-
-    private static final String VUFORIA_KEY = "AXK9WW//////AAAAGdQTwOT6w0S8mkoY5OeIBdAytqD4UXHQwMfLLDo58dsWQw8kG7ITAMoYBNDXQw3yF8uOzoI9PIZfm5jkcaJpQ2gBY/gKPsit0vDr/xRt50mHEM5PkIxfWSggLYX/3fF2eDAgBXshBJdSnGyH5vQcK+o20oLNY+J3xLB/j9lZjzQBydcJaOFP3WIV0KxqsqNqnsEKIUzBTRA/07S/YVr/90PQ0Spn5HvVS0qLDIB5Fjv5klAFe6iEbM9CfJHq5XZkKjMSU9kwDJDOW2asBXtkH62sq7yS1vh+WnEM+cyKLGk3A4pYVhz5EtE3Fhi08yECN/mbBVTzo7rW4Yz6olvmWw7FPgEKdDhCa8F0NlhaC1s4";
-
-    private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
-    private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
-    private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
-
-    // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
-    // We will define some constants and conversions here
-    private static final float mmPerInch = 25.4f;
-    private static final float mmFTCFieldWidth = (12 * 6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
-    private static final float mmTargetHeight = (6) * mmPerInch;          // the height of the center of the target image above the floor
-
-    // Select which camera you want use.  The FRONT camera is the one on the same side as the screen.
-    // Valid choices are:  BACK or FRONT
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = FRONT;
-
-    private OpenGLMatrix lastLocation = null;
-    private boolean targetVisible = false;
-
-    private TFObjectDetector tfod;
     // The IMU sensor object
     BNO055IMU imu;
 
     // State used for updating telemetry
     Orientation angles;
     Acceleration gravity;
-    /**
-     * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
-     * localization engine.
-     */
-    VuforiaLocalizer vuforia;
 
     // Declare OpMode members.
     public DcMotor leftDrive = null;
@@ -96,12 +86,16 @@ public class Depot_Autonomous extends LinearOpMode {
     public Servo rightLiftServo = null;
     public DistanceSensor distanceSensorLeft = null;
     public DistanceSensor distanceSensorRight = null;
+    public Servo craterArmServo = null;
 
-
+    public double dist1;
+    public double dist2;
+    public double heading = 0;
+    public double sensorHeading = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
-
+        init_a();
 
         leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
         rightDrive = hardwareMap.get(DcMotor.class, "rightDrive");
@@ -114,8 +108,7 @@ public class Depot_Autonomous extends LinearOpMode {
         rightLiftServo = hardwareMap.get(Servo.class, "rightLiftServo");
         distanceSensorLeft = hardwareMap.get(DistanceSensor.class, "distSensorLeft");
         distanceSensorRight = hardwareMap.get(DistanceSensor.class, "distSensorRight");
-
-
+        craterArmServo = hardwareMap.get(Servo.class, "craterArmServo");
 
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         liftMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -152,60 +145,176 @@ public class Depot_Autonomous extends LinearOpMode {
             sleep(50);
             idle();
         }
+//
 
-        telemetry.addData("Mode", "waiting for start");
-        telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
-        telemetry.update();
-
-
-        composeTelemetry();
-        // Setup our telemetry dashboard
-
-        telemetry.addData("Status", "initialized");
+        telemetry.addData("Status", "Put me up");
         telemetry.update();
 
         waitForStart();
 
-///////////////// I LOVE METHODS
+        LowerIntake();
 
-       LowerIntake();
+        LowerFromLander();
 
-       LowerFromLander();
+        ResetLift();
 
-       ResetLift();
+        ResetIntake();
 
-       IntakeReset();
+        LeftGyroTurn(43,0.3);
 
-       //change distance for consistency sensing sample
-       DriveForward(300, 0.9 );
+        if (detector.getXPosition() == 0) {
+            telemetry.addData("Gold Mineral Position", "Left");
+            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+            telemetry.update();
 
-       RightTurn(750, 0.9);
+            sleep(2000);
 
-       DriveBackwards(350,1);
+            LeftGyroTurn(43, 0.2);
 
-       ScoreMineral();
+            CenterMineralAdjustment();
 
-       LowerIntake();
+            LeftGyroTurn(70,0.2);
 
-       DropMarker();
+            DriveForward(3100,0.9);
 
-       sleep(400);
+            RightGyroTurn(145,0.4);
 
-       IntakeResetForwardDrive(600,0.9);
+            DriveBackwards(2500,0.9);
 
-       LeftTurn(200,1);
+            LowerIntake();
 
-       DriveForward(400,1);
+            DropMarker();
 
-       stop();
-       telemetry.addData("Status", "Ready!!!");
-       telemetry.update();
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            sleep(400);
+
+            IntakeResetForwardDrive(600,0.9);
+
+            LeftTurn(200,1);
+
+            DriveForward(400,1);
+
+            stop();
+
+
+        }
+        else if (detector.getXPosition() < 325) {
+
+            telemetry.addData("Gold Mineral Position", "Right");
+            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+            telemetry.update();
+
+            sleep(2000);
+
+            RightGyroTurn(-15,0.2);
+
+            DriveForward(3100,0.8);
+
+            RightGyroTurn(90,0.4);
+
+            DriveBackwards(1900,0.9);
+
+            LowerIntake();
+
+            DropMarker();
+
+            RightTurn(1800,0.7);
+
+            IntakeResetForwardDrive(1200,0.8);
+
+            LynchpinReset();
+
+            stop();
+
+        }
+        else if (detector.getXPosition() > 325) {
+            telemetry.addData("Gold Mineral Position", "Center");
+            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+            telemetry.update();
+
+            sleep(2000);
+
+            LeftGyroTurn(43, 0.2);
+
+            CenterMineralAdjustment();
+
+            DriveForward(3200, 0.9);
+
+            RightGyroTurn(135, 0.4);
+
+            DriveBackwards(1250, 0.9);
+
+            LowerIntake();
+
+            DropMarker();
+
+            sleep(400);
+
+            IntakeResetForwardDrive(600,0.9);
+
+            LeftTurn(200,1);
+
+            stop();
+
+        }
     }
 
-   //METHOD SECTION
 
-    //Drive Methods
+    public void init_a() {
+        webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
+
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.vuforiaLicenseKey = "AWbfTmn/////AAABmY0xuIe3C0RHvL3XuzRxyEmOT2OekXBSbqN2jot1si3OGBObwWadfitJR/D6Vk8VEBiW0HG2Q8UAEd0//OliF9aWCRmyDJ1mMqKCJZxpZemfT5ELFuWnJIZWUkKyjQfDNe2RIaAh0ermSxF4Bq77IDFirgggdYJoRIyi2Ys7Gl9lD/tSonV8OnldIN/Ove4/MtEBJTKHqjUEjC5U2khV+26AqkeqbxhFTNiIMl0LcmSSfugGhmWFGFtuPtp/+flPBRGoBO+tSl9P2sV4mSUBE/WrpHqB0Jd/tAmeNvbtgQXtZEGYc/9NszwRLVNl9k13vrBcgsiNxs2UY5xAvA4Wb6LN7Yu+tChwc+qBiVKAQe09\n";
+        parameters.fillCameraMonitorViewParent = true;
+
+        parameters.cameraName = webcamName;
+
+        vuforia = new Dogeforia(parameters);
+        vuforia.enableConvertFrameToBitmap();
+
+        telemetry.addData("Status", "DogeCV 2018.0 - Gold Align Example");
+
+        // Set up detector
+        detector = new GoldAlignDetector(); // Create detector
+        detector.init(hardwareMap.appContext,CameraViewDisplay.getInstance(), 0, true);
+        // Initialize it with the app context and camera
+        detector.useDefaults(); // Set detector to use default settings
+
+        // Optional tuning
+        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+        detector.downscale = 0.4; // How much to downscale the input frames
+
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
+        detector.maxAreaScorer.weight = 0.005; //
+
+        detector.ratioScorer.weight = 5; //
+        detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
+
+        // detector.enable(); // Start the detector!
+
+        vuforia.setDogeCVDetector(detector);
+        vuforia.enableDogeCV();
+        vuforia.showDebug();
+        vuforia.start();
+    }
+
+    /*
+     * Code to run REPEATEDLY when the driver hits PLAY
+     */
+//    @Override
+//    public void loop() {
+//        telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
+//        telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+//    }
+
+
     public void DriveForward(int distance , double speed){
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
@@ -239,7 +348,9 @@ public class Depot_Autonomous extends LinearOpMode {
 
     //Standard Functions
     public void LowerFromLander(){
+        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         lynchpin.setTargetPosition(lynchpin.getCurrentPosition() + 525);
+        liftMotor.setPower(-0.8);
         lynchpin.setPower(1);
         while (lynchpin.isBusy()&& opModeIsActive()){}
 
@@ -253,8 +364,8 @@ public class Depot_Autonomous extends LinearOpMode {
         liftMotor.setPower(0.4);
         while (liftMotor.isBusy() && opModeIsActive()){}
 
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 400);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 400);
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 500);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 500);
         leftDrive.setPower(0.8);
         rightDrive.setPower(0.8);
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
@@ -262,13 +373,11 @@ public class Depot_Autonomous extends LinearOpMode {
     public void LowerIntake() {
         intakeFold.setTargetPosition(intakeFold.getCurrentPosition() + 400);
         intakeFold.setPower(0.5);
-        while (intakeFold.isBusy() && opModeIsActive()) {}
+        while (intakeFold.isBusy() && opModeIsActive()) {
+        }
     }
-    public void ScoreMineral(){
-        int mineralPosition = returnMineralPosition();
-        telemetry.addData("Object is on the,", mineralPosition);
-        telemetry.update();
-    }
+
+
     public void ResetLift(){
         liftMotor.setTargetPosition(0);
         liftMotor.setPower(0.9);
@@ -277,16 +386,21 @@ public class Depot_Autonomous extends LinearOpMode {
     public void DropMarker() {
         leftLiftServo.setPosition(0.7);
         rightLiftServo.setPosition(0.3);
-        sleep(1800);
+        sleep(1900);
         leftLiftServo.setPosition(0);
         rightLiftServo.setPosition(1);
     }
-
-    public void IntakeReset() {
+    public void ResetIntake() {
         intakeFold.setTargetPosition(0);
         intakeFold.setPower(0.4);
+        while (intakeFold.isBusy() && opModeIsActive()) {
+        }
     }
-
+    public void LynchpinReset(){
+        lynchpin.setTargetPosition(0);
+        lynchpin.setPower(1);
+        while (lynchpin.isBusy()&& opModeIsActive()){}
+    }
     public void IntakeResetForwardDrive(int distance , double speed) {
         intakeFold.setTargetPosition(0);
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
@@ -297,13 +411,75 @@ public class Depot_Autonomous extends LinearOpMode {
         while (intakeFold.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() && opModeIsActive()) {
         }
     }
-    public void LynchpinReset(){
-        lynchpin.setTargetPosition(0);
-        lynchpin.setPower(1);
-        while (lynchpin.isBusy()&& opModeIsActive()){}
-    }
 
     //Gyro Methods
+    public void resetGyro() {
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double currentHeading = AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle);
+        sensorHeading = currentHeading;
+        heading = 0;
+    }
+    public double getHeading() {
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double currentHeading = AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle);
+        double delta = currentHeading - sensorHeading;
+        if(delta < -180)
+        {
+            delta += 360;
+        }
+        else if(delta >= 180)
+        {
+            delta -=360;
+        }
+        heading += delta;
+        sensorHeading = currentHeading;
+        return heading;
+    }
+
+
+    public void GyroTurn( double degrees, double speed) {
+        resetGyro();
+
+        boolean Left = degrees > 0;
+        double LeftSpeed = speed;
+        double RightSpeed = speed;
+
+
+        telemetry.addData("heading", heading);
+        telemetry.update();
+        sleep(1000);
+        if (Left){
+            LeftSpeed = LeftSpeed * -1;
+        }
+        else {
+            RightSpeed = RightSpeed * -1;
+        }
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftDrive.setPower(LeftSpeed);
+        rightDrive.setPower(RightSpeed);
+        while (Math.abs(getHeading())< Math.abs(degrees) - 6 && opModeIsActive()) {
+
+            if (Math.abs(degrees)-Math.abs(getHeading()) < 30){
+                if (Left) {
+                    leftDrive.setPower(-0.35);
+                    rightDrive.setPower(0.35);
+
+                }
+                else {
+                    leftDrive.setPower(0.35);
+                    rightDrive.setPower(-0.35);
+                }
+
+            }
+
+            telemetry.addData("heading", heading);
+            telemetry.update();
+
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+    }
     public void RightGyroTurn(double degrees , double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 8000);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 8000);
@@ -391,6 +567,8 @@ public class Depot_Autonomous extends LinearOpMode {
     public void ResetGyro() {
         imu.startAccelerationIntegration(new Position(), new Velocity(), 50);
         imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+
     }
     public void CenterMineralAdjustment(){
         double Lcorrect = distanceSensorLeft.getDistance(DistanceUnit.MM) - 857;
@@ -399,12 +577,14 @@ public class Depot_Autonomous extends LinearOpMode {
         double hypotenuse = Math.sqrt(preHypotenuse);
         double correctionAngle = Math.acos((hypotenuse * hypotenuse + Lcorrect * Lcorrect - Rcorrect * Rcorrect) / (2 * hypotenuse * Lcorrect));
 
+
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 900);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 900);
         leftDrive.setPower(0.2);
         rightDrive.setPower(-0.2);
         while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > -correctionAngle + 44 & leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
 
             telemetry.addData("heading", new Func<String>() {
                 @Override
@@ -462,6 +642,11 @@ public class Depot_Autonomous extends LinearOpMode {
             });
             telemetry.update();
         }}
+    public void craterArmDeploy(){
+
+
+        craterArmServo.setPosition(0.5);
+    }
     //Mode set Protocols
     public void SetModeRUN_TO_POSITION(){
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -556,162 +741,5 @@ public class Depot_Autonomous extends LinearOpMode {
     String formatDegrees(double degrees){
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
-    private void initTfod() {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
-    }
-
-    public int returnMineralPosition() {
-        // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
-        // first.
-        initVuforia();
-        int result = 0;
-
-        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
-            initTfod();
-        } else {
-            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
-        }
-
-        /** Wait for the game to begin */
-        telemetry.addData(">", "Press Play to start tracking");
-        telemetry.update();
-        waitForStart();
-
-        if (opModeIsActive()) {
-            /** Activate Tensor Flow Object Detection. */
-            if (tfod != null) {
-                tfod.activate();
-            }
-
-            while (opModeIsActive()) {
-                if (tfod != null) {
-                    // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                    //This is a change
-                    if (updatedRecognitions != null) {
-                        telemetry.addData("# Object Detected", updatedRecognitions.size());
-                        if (updatedRecognitions.size() == 2) {
-                            int goldMineralX = -1;
-                            int silverMineral1X = -1;
-                            int silverMineral2X = -1;
-                            for (Recognition recognition : updatedRecognitions) {
-                                if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                                    goldMineralX = (int) recognition.getLeft();
-                                } else if (silverMineral1X == -1) {
-                                    silverMineral1X = (int) recognition.getLeft();
-                                } else {
-                                    silverMineral2X = (int) recognition.getLeft();
-                                }
-                            }
-                            if (goldMineralX == -1 && silverMineral1X != -1 && silverMineral2X != -1) {
-                                telemetry.addData("Gold Mineral Position", "Right");
-                                LeftGyroTurn(43, 0.2);
-
-                                CenterMineralAdjustment();
-
-                                RightGyroTurn(-15,0.2);
-
-                                DriveForward(3100,0.8);
-
-                                RightGyroTurn(90,0.4);
-
-                                DriveBackwards(1900,0.9);
-
-                                LowerIntake();
-
-                                DropMarker();
-
-                                RightTurn(1800,0.7);
-
-                                IntakeResetForwardDrive(1200,0.8);
-
-                                LynchpinReset();
-
-                                stop();
-
-                                return result;
-
-                            } else if (goldMineralX != -1 && silverMineral1X != -1){
-
-
-                                if (goldMineralX > silverMineral1X) {
-                                    telemetry.addData("Gold Mineral Position", "Center");
-
-                                    LeftGyroTurn(43, 0.2);
-
-                                    CenterMineralAdjustment();
-
-                                    DriveForward(3200, 0.9);
-
-                                    RightGyroTurn(135, 0.4);
-
-                                    DriveBackwards(1250, 0.9);
-
-                                    LowerIntake();
-
-                                    DropMarker();
-
-                                    sleep(400);
-
-                                    IntakeResetForwardDrive(600,0.9);
-
-                                    LeftTurn(200,1);
-
-                                    stop();
-                                } else
-                                    telemetry.addData("Gold Mineral Position", "Left");
-
-                                    LeftGyroTurn(43, 0.2);
-
-                                    CenterMineralAdjustment();
-
-                                    LeftGyroTurn(70,0.2);
-
-                                    DriveForward(3100,0.9);
-
-                                    RightGyroTurn(145,0.4);
-
-                                    DriveBackwards(2500,0.9);
-
-                                    return result;
-                                }
-                            }
-
-                        }
-                        telemetry.update();
-                    }
-                }
-            }
-
-
-        if (tfod != null) {
-            tfod.shutdown();
-        }
-        return result;
-    }
-    /**
-     * Initialize the Vuforia localization engine.
-     */
-    private void initVuforia() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
-    }
-
 
 }
-

@@ -86,9 +86,6 @@ public class Crater_Autonomous extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         init_a();
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
         leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
         rightDrive = hardwareMap.get(DcMotor.class, "rightDrive");
         liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
@@ -104,6 +101,7 @@ public class Crater_Autonomous extends LinearOpMode {
 
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         liftMotor.setDirection(DcMotor.Direction.REVERSE);
+
 
         //Set all motors to run to position and reset encoders
         SetModeRUN_TO_POSITION();
@@ -137,12 +135,8 @@ public class Crater_Autonomous extends LinearOpMode {
             sleep(50);
             idle();
         }
-//
-        telemetry.addData("Mode", "waiting for start");
-        telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
-        telemetry.update();
 
-        telemetry.addData("Status", "initialized");
+        telemetry.addData("Status", "Put me up");
         telemetry.update();
 
         waitForStart();
@@ -155,9 +149,41 @@ public class Crater_Autonomous extends LinearOpMode {
 
         ResetIntake();
 
-        LeftGyroTurn(43,0.3);
+        //LeftGyroTurn(43,0.3);
 
-        sleep(2000);
+        boolean aligned = false;
+
+        while (!detector.isFound()){
+            leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 100);
+            rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 100);
+            leftDrive.setPower(0.2);
+            rightDrive.setPower(0.2);
+            if (!aligned){
+                aligned = detector.getAligned();
+
+            }else{
+                break;
+            }
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+
+        while (!detector.getAligned() && !aligned){
+            leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 100);
+            rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 100);
+            leftDrive.setPower(0.02);
+            rightDrive.setPower(0.02);
+
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+        //GyroTurn(20,0.5);
+
+        DriveForward(3100,1);
+
+        stop();
+
+        //sleep(2000);
         if (detector.getXPosition() == 0) {
             telemetry.addData("Gold Mineral Position", "Left");
             telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
@@ -235,7 +261,7 @@ public class Crater_Autonomous extends LinearOpMode {
         detector.useDefaults(); // Set detector to use default settings
 
         // Optional tuning
-        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignSize = 120; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
         detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
         detector.downscale = 0.4; // How much to downscale the input frames
 
