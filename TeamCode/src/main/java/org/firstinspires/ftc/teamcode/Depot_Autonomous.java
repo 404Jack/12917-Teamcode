@@ -95,7 +95,6 @@ public class Depot_Autonomous extends LinearOpMode
 
     @Override
     public void runOpMode() throws InterruptedException {
-        init_a();
 
         leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
         rightDrive = hardwareMap.get(DcMotor.class, "rightDrive");
@@ -160,7 +159,11 @@ public class Depot_Autonomous extends LinearOpMode
 
         ResetIntake();
 
-        LeftGyroTurn(43,0.3);
+        LeftTurn(300,0.3);
+
+        init_a();
+
+        sleep(4000);
 
         if (detector.getXPosition() == 0) {
             telemetry.addData("Gold Mineral Position", "Left");
@@ -168,13 +171,11 @@ public class Depot_Autonomous extends LinearOpMode
             telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
             telemetry.update();
 
-            sleep(2000);
+            sleep(1000);
 
             LeftGyroTurn(43, 0.2);
 
-            CenterMineralAdjustment();
-
-            LeftGyroTurn(70,0.2);
+            LeftGyroTurn(75,0.2);
 
             DriveForward(3100,0.9);
 
@@ -205,21 +206,23 @@ public class Depot_Autonomous extends LinearOpMode
             telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
             telemetry.update();
 
-            sleep(2000);
+            sleep(1000);
+
+            LeftGyroTurn(45,0.3);
 
             RightGyroTurn(-15,0.2);
 
             DriveForward(3100,0.8);
 
-            RightGyroTurn(90,0.4);
+            RightGyroTurn(100,0.4);
 
-            DriveBackwards(1900,0.9);
+            DriveBackwards(2200,0.9);
 
             LowerIntake();
 
             DropMarker();
 
-            RightTurn(1800,0.7);
+            RightTurn(1550,0.7);
 
             IntakeResetForwardDrive(1200,0.8);
 
@@ -236,7 +239,7 @@ public class Depot_Autonomous extends LinearOpMode
 
             sleep(2000);
 
-            LeftGyroTurn(43, 0.2);
+            LeftGyroTurn(45, 0.4);
 
             CenterMineralAdjustment();
 
@@ -244,7 +247,7 @@ public class Depot_Autonomous extends LinearOpMode
 
             RightGyroTurn(135, 0.4);
 
-            DriveBackwards(1250, 0.9);
+            DriveBackwards(1550, 0.9);
 
             LowerIntake();
 

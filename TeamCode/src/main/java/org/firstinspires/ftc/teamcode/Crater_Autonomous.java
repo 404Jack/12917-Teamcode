@@ -149,93 +149,39 @@ public class Crater_Autonomous extends LinearOpMode {
 
         ResetIntake();
 
-        //LeftGyroTurn(43,0.3);
-
         boolean aligned = false;
 
-        while (!detector.isFound()){
+        while (!detector.isFound()) {
             leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 100);
             rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 100);
-            leftDrive.setPower(0.2);
-            rightDrive.setPower(0.2);
-            if (!aligned){
+            leftDrive.setPower(0.15);
+            rightDrive.setPower(0.15);
+            if (!aligned) {
                 aligned = detector.getAligned();
 
-            }else{
+            } else {
                 break;
             }
         }
         leftDrive.setPower(0);
         rightDrive.setPower(0);
 
-        while (!detector.getAligned() && !aligned){
-            leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 100);
-            rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 100);
-            leftDrive.setPower(0.02);
-            rightDrive.setPower(0.02);
+        while (!detector.getAligned() && !aligned) {
+            leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 75);
+            rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 75);
+            leftDrive.setPower(0.03);
+            rightDrive.setPower(0.03);
 
         }
         leftDrive.setPower(0);
         rightDrive.setPower(0);
         //GyroTurn(20,0.5);
 
-        DriveForward(3100,1);
+        DriveForward(3100, 1);
 
+        craterArmDeploy();
         stop();
-
-        //sleep(2000);
-        if (detector.getXPosition() == 0) {
-            telemetry.addData("Gold Mineral Position", "Left");
-            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
-            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
-            telemetry.update();
-
-            LeftGyroTurn(70,0.2);
-
-            DriveForward(3100,0.9);
-
-            craterArmDeploy();
-
-            stop();
-
-
-        }
-        else if (detector.getXPosition() < 325) {
-
-            telemetry.addData("Gold Mineral Position", "Right");
-            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
-            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
-            telemetry.update();
-
-            RightGyroTurn(-15,0.2);
-
-            DriveForward(3100,0.8);
-
-            craterArmDeploy();
-
-            stop();
-
-        }
-        else if (detector.getXPosition() > 325) {
-            telemetry.addData("Gold Mineral Position", "Center");
-            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
-            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
-            telemetry.update();
-
-
-            LeftGyroTurn(43, 0.2);
-
-            CenterMineralAdjustment();
-
-            DriveForward(2700, 0.9);
-
-            craterArmDeploy();
-
-            stop();
-
-        }
     }
-
 
     public void init_a() {
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -261,7 +207,7 @@ public class Crater_Autonomous extends LinearOpMode {
         detector.useDefaults(); // Set detector to use default settings
 
         // Optional tuning
-        detector.alignSize = 120; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignSize = 140; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
         detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
         detector.downscale = 0.4; // How much to downscale the input frames
 
@@ -343,6 +289,12 @@ public class Crater_Autonomous extends LinearOpMode {
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 500);
         leftDrive.setPower(0.8);
         rightDrive.setPower(0.8);
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 300);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 300);
+        leftDrive.setPower(0.6);
+        rightDrive.setPower(0.6);
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
     public void LowerIntake() {
