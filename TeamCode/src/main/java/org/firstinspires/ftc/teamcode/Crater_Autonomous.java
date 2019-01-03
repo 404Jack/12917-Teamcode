@@ -269,17 +269,17 @@ public class Crater_Autonomous extends LinearOpMode {
 
     //Standard Functions
     public void LowerFromLander(){
-        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        lynchpin.setTargetPosition(lynchpin.getCurrentPosition() + 525);
-        liftMotor.setPower(-0.8);
         lynchpin.setPower(1);
+        liftMotor.setPower(-0.8);
+        lynchpin.setTargetPosition(525);
+        //liftMotor.setTargetPosition(25);
         while (lynchpin.isBusy()&& opModeIsActive()){}
 
         //Let robot down
-        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        liftMotor.setPower(.1);
-        sleep (1600);
-        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor.setTargetPosition(2900);
+        liftMotor.setPower(0.6);
+        while (liftMotor.isBusy()&& opModeIsActive()){}
+
 
         liftMotor.setTargetPosition(liftMotor.getCurrentPosition() + 150);
         liftMotor.setPower(0.4);

@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Telemetry_TeleOp")
-@Disabled
+
 public class TelemetryTeleop extends LinearOpMode {
 
 
@@ -62,7 +62,8 @@ public class TelemetryTeleop extends LinearOpMode {
         sweeperMotor.setDirection(DcMotor.Direction.FORWARD);
         lynchpin.setDirection(DcMotor.Direction.FORWARD);
 
-
+        leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intakeSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intakeFold.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -101,8 +102,15 @@ public class TelemetryTeleop extends LinearOpMode {
             double leftPower;
             double rightPower;
 
-            leftPower = gamepad1.right_stick_y;
-            rightPower = gamepad1.left_stick_y;
+            leftPower = gamepad1.right_stick_y/2;
+            rightPower = gamepad1.left_stick_y/2;
+
+            if (gamepad1.dpad_down){
+                leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            }
 
             if (gamepad1.b) {
                 sweeperMotor.setPower(0.6);
