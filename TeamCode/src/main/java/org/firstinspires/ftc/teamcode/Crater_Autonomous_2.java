@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -41,6 +42,8 @@ public class Crater_Autonomous_2 extends LinearOpMode {
     // State used for updating telemetry
     Orientation angles;
     Acceleration gravity;
+    private double TOLERANCE = 0.25;
+    private double GAIN = 0.05;
 
     // Declare OpMode members.
     public DcMotor leftDrive = null;
@@ -385,7 +388,32 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         SetModeRUN_TO_POSITION();
 
     }
+    public void driveAlongWall(double speed)
+    {
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        double leftFrontPower = 0;
+        double leftBackPower = 0;
 
+        double error = distanceSensorRight.getDistance(DistanceUnit.INCH) - 15;
+        if(error < TOLERANCE)  //The robot is too close to the wall
+        {
+            leftDrive.setPower (-GAIN * error);
+            rightDrive.setPower(GAIN * error);
+
+        } else if(error > TOLERANCE)  //The robot is too far away
+        {
+            leftDrive.setPower( GAIN * error);
+            rightDrive.setPower( -GAIN * error);
+
+        } else {
+           speed = 0.5;
+
+        }
+        leftDrive.setPower(Range.clip(speed,-0.6,0.6));
+        rightDrive.setPower(Range.clip(speed,-0.6,0.6));
+
+    }
 
     //Gyro Methods
     public void resetGyro() {
