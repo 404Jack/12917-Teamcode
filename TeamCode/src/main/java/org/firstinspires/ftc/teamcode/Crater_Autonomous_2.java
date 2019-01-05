@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.Range;
+
 
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -123,42 +123,72 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
         waitForStart();
 
-        LowerIntake();
-
-        LowerFromLander();
-
-        ResetLift();
-
-        ResetIntake();
-
-        SetModeRUN_TO_POSITION();
-
-        GoldAlign();
-
-        Sampledrive(2000,0.9);
-
-        if (rightDrive.getCurrentPosition() > 200 & rightDrive.getCurrentPosition() < 600) {
-            GyroTurn(114,0.5);
+//        LowerIntake();
+//
+//        LowerFromLander();
+//
+//        ResetIntake();
+//
+//        SetModeRUN_TO_POSITION();
+//
+//        LeftGyroTurn(33, 0.5);
+//        sleep(500);
+//        if (detector.isFound()) {
+//            if (detector.getXPosition() > 325) {
+//                //Center
+//                LeftGyroTurn(45, 0.7);
+//
+//                DriveForward(1900, 0.8);
+//
+//                DriveBackwards(1700, 0.8);
+//
+//                BrakeDrivetrain();
+//
+//                LeftGyroTurn(2, 0.8);
+//            } else {
+//                //Right
+//                RightGyroTurn(-11, 0.7);
+//
+//                DriveForward(2200, 0.8);
+//
+//                DriveBackwards(1900, 0.8);
+//
+//                BrakeDrivetrain();
+//
+//                LeftGyroTurn(2, 0.8);
+//            }
+//        } else if (!detector.isFound()) {
+//            //Left
+//            LeftGyroTurn(73, 0.5);
+//
+//            DriveForward(2200, 0.8);
+//
+//            DriveBackwards(1900, 0.8);
+//
+//            BrakeDrivetrain();
+//
+//            LeftGyroTurn(2, 0.8);
+//        }
+//
+//        DriveForward(1000,0.8);
+//
+//        DistanceSensorDriveForward();
+         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        while (distanceSensorRight.getDistance(DistanceUnit.INCH) < 6){
+            rightDrive.setPower(0.45);
+            leftDrive.setPower(-0.45);
         }
-        else if (rightDrive.getCurrentPosition() > 600 & rightDrive.getCurrentPosition() < 1000) {
-            GyroTurn(89,0.5);
-        }
-        else if (rightDrive.getCurrentPosition() > 1000 & rightDrive.getCurrentPosition() < 1400) {
-            GyroTurn(74,0.5);
-        }
+            rightDrive.setPower(0);
+            leftDrive.setPower(0);
 
-        DriveForward(1000,0.8);
+         while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 30){
+             rightDrive.setPower(-0.8);
+             leftDrive.setPower(-0.8);
+         }
+         rightDrive.setPower(0);
+         leftDrive.setPower(0);                                   // driveAlongWall(0.5);
 
-        DistanceSensorDriveForward();
-
-        GyroTurn(45,0.5);
-
-       /* DriveToDepot(0.4);
-
-        DropMarker();
-
-        DriveToCrater(0.4);
-*/
          stop();
     }
 
@@ -186,7 +216,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         detector.useDefaults(); // Set detector to use default settings
 
         // Optional tuning
-        detector.alignSize = 160; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignSize = 120; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
         detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
         detector.downscale = 0.5; // How much to downscale the input frames
 
@@ -208,10 +238,14 @@ public class Crater_Autonomous_2 extends LinearOpMode {
     public void DistanceSensorDriveForward() {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        while (distanceSensorRight.getDistance(DistanceUnit.INCH) > 7) {
-           DriveForward(100,0.8);
-
+        while (distanceSensorRight.getDistance(DistanceUnit.INCH) > 3) {
+            leftDrive.setPower(-0.6);
+            rightDrive.setPower(-0.6);
         }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
     public void DriveForward(int distance , double speed){
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
@@ -254,25 +288,23 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
         //Let robot down
         liftMotor.setTargetPosition(2900);
-        liftMotor.setPower(0.6);
+        liftMotor.setPower(1);
         while (liftMotor.isBusy()&& opModeIsActive()){}
 
-
-        liftMotor.setTargetPosition(liftMotor.getCurrentPosition() + 150);
-        liftMotor.setPower(0.4);
-        while (liftMotor.isBusy() && opModeIsActive()){}
-
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 500);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 500);
-        leftDrive.setPower(0.8);
-        rightDrive.setPower(0.8);
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 400);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 400);
+        leftDrive.setPower(1);
+        rightDrive.setPower(1);
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 300);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 300);
-        leftDrive.setPower(0.6);
-        rightDrive.setPower(0.6);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+        liftMotor.setTargetPosition(0);
+        liftMotor.setPower(1);
+        leftDrive.setPower(1);
+        rightDrive.setPower(1);
+        while (liftMotor.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+        sleep(400);
     }
     public void LowerIntake() {
         intakeFold.setTargetPosition(intakeFold.getCurrentPosition() + 400);
@@ -283,11 +315,9 @@ public class Crater_Autonomous_2 extends LinearOpMode {
     public void Sampledrive(int distance, double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
-        intakeFold.setTargetPosition(1050);
-        intakeFold.setPower(0.4);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (intakeFold.isBusy()& leftDrive.isBusy() & rightDrive.isBusy() &opModeIsActive());
+        while (leftDrive.isBusy() & rightDrive.isBusy() &opModeIsActive());
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + distance);
@@ -388,31 +418,26 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         SetModeRUN_TO_POSITION();
 
     }
-    public void driveAlongWall(double speed)
-    {
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        double leftFrontPower = 0;
-        double leftBackPower = 0;
+    public void driveAlongWall(double speed) {
+        while (distanceSensorLeft.getDistance(DistanceUnit.CM)> 65) {
+            leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        double error = distanceSensorRight.getDistance(DistanceUnit.INCH) - 15;
-        if(error < TOLERANCE)  //The robot is too close to the wall
-        {
-            leftDrive.setPower (-GAIN * error);
-            rightDrive.setPower(GAIN * error);
-
-        } else if(error > TOLERANCE)  //The robot is too far away
-        {
-            leftDrive.setPower( GAIN * error);
-            rightDrive.setPower( -GAIN * error);
-
-        } else {
-           speed = 0.5;
-
+            double error = distanceSensorRight.getDistance(DistanceUnit.INCH) - 7;
+            if (error < TOLERANCE){//The robot is too close to the wall
+                leftDrive.setPower(GAIN - speed);
+                rightDrive.setPower(-GAIN - speed);
+            }
+            else if (error > TOLERANCE){//The robot is too far away
+                leftDrive.setPower(-GAIN - speed);
+                rightDrive.setPower(GAIN - speed);
+            } else {
+                leftDrive.setPower(-speed);
+                rightDrive.setPower(-speed);
+            }
         }
-        leftDrive.setPower(Range.clip(speed,-0.6,0.6));
-        rightDrive.setPower(Range.clip(speed,-0.6,0.6));
-
+        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     //Gyro Methods
@@ -600,8 +625,11 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         intakeSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeFold.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
-
-    void composeTelemetry() {
+     public void BrakeDrivetrain(){
+         leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+         rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+     }
+     void composeTelemetry() {
 
 
         // At the beginning of each telemetry update, grab a bunch of data
