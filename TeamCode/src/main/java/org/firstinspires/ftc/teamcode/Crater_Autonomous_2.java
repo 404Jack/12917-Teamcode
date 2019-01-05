@@ -179,15 +179,12 @@ public class Crater_Autonomous_2 extends LinearOpMode {
             rightDrive.setPower(0.45);
             leftDrive.setPower(-0.45);
         }
-            rightDrive.setPower(0);
-            leftDrive.setPower(0);
 
-         while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 30){
-             rightDrive.setPower(-0.8);
-             leftDrive.setPower(-0.8);
-         }
-         rightDrive.setPower(0);
-         leftDrive.setPower(0);                                   // driveAlongWall(0.5);
+        PIDWallFollower();
+
+
+       
+                                     // driveAlongWall(0.5);
 
          stop();
     }
@@ -276,6 +273,39 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+    }
+    public void PIDWallFollower(){
+           double dist =120;
+           double intergral = 0;
+           double error = 0;
+           double last_error = 0;
+           double derivative = 0;
+           double Kd = 1; //3rd
+           double Kp = 1; //start here Higher is sharper
+           double Ki = 1; //2nd
+           double finalKp;
+           double finalKi;
+           double finalKd;
+           double steering;
+
+          while (distanceSensorLeft.getDistance(DistanceUnit.CM) < 100) {
+          error = dist - (distanceSensorRight.getDistance(DistanceUnit.MM));
+           intergral = intergral+error;
+           derivative = error - last_error;
+           finalKp = Kp * error;
+           finalKi =intergral*Ki;
+           finalKd  =derivative * Kd;
+           steering = finalKp+finalKi+finalKd+0;
+
+           if (error <= 0) { // if the robot is to close
+                  leftDrive.setPower(0.5 + steering);
+                  rightDrive.setPower(0.5);
+           } else if (error >= 0) {  // if the robot is to far
+                    leftDrive.setPower(0.5);
+                    rightDrive.setPower(0.5 + steering);
+           }
+           last_error = error;
+       }
     }
 
     //Standard Functions
