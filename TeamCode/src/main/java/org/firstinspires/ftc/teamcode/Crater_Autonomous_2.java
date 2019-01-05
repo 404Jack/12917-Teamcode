@@ -173,17 +173,14 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 //        DriveForward(1000,0.8);
 //
 //        DistanceSensorDriveForward();
-         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        while (distanceSensorRight.getDistance(DistanceUnit.INCH) < 6){
-            rightDrive.setPower(0.45);
-            leftDrive.setPower(-0.45);
-        }
+//        while (distanceSensorRight.getDistance(DistanceUnit.INCH) < 6){
+//            rightDrive.setPower(0.45);
+//            leftDrive.setPower(-0.45);
+//        }
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         PIDWallFollower();
-
-
-       
                                      // driveAlongWall(0.5);
 
          stop();
@@ -275,35 +272,41 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
     public void PIDWallFollower(){
-           double dist =120;
+           double dist = 5;
            double intergral = 0;
            double error = 0;
            double last_error = 0;
            double derivative = 0;
-           double Kd = 1; //3rd
-           double Kp = 1; //start here Higher is sharper
-           double Ki = 1; //2nd
+           double Kd = 0; //3rd
+           double Kp = 0.5; //start here Higher is sharper
+           double Ki = 0; //2nd
            double finalKp;
            double finalKi;
            double finalKd;
            double steering;
 
-          while (distanceSensorLeft.getDistance(DistanceUnit.CM) < 100) {
-          error = dist - (distanceSensorRight.getDistance(DistanceUnit.MM));
+          while (opModeIsActive()) {
+          error = (distanceSensorRight.getDistance(DistanceUnit.INCH) - dist);
            intergral = intergral+error;
            derivative = error - last_error;
            finalKp = Kp * error;
            finalKi =intergral*Ki;
            finalKd  =derivative * Kd;
-           steering = finalKp+finalKi+finalKd+0;
+           steering = finalKp+finalKi+finalKd;
+           
+           telemetry.addData("steering",steering);
+           telemetry.update();
 
-           if (error <= 0) { // if the robot is to close
-                  leftDrive.setPower(0.5 + steering);
-                  rightDrive.setPower(0.5);
-           } else if (error >= 0) {  // if the robot is to far
-                    leftDrive.setPower(0.5);
-                    rightDrive.setPower(0.5 + steering);
+           if (error < 0) { // if the robot is to close
+                  leftDrive.setPower(-0.5 - steering);
+                  rightDrive.setPower(-0.5 + steering);
+                  sleep(50);
+           } else if (error > 0) {  // if the robot is to far
+                  leftDrive.setPower(-0.5 + steering);
+                  rightDrive.setPower(-0.5 - steering);
+                  sleep(50);
            }
+
            last_error = error;
        }
     }
