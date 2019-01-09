@@ -299,15 +299,16 @@ public class Crater_Autonomous_2 extends LinearOpMode {
            double last_error = 0;
            double derivative = 0;
            double Kd = 0; //3rd
-           double Kp = 0.02; //start here Higher is sharper
+           double Kp = 0.1; //start here Higher is sharper
            double Ki = 0; //2nd
            double finalKp;
            double finalKi;
            double finalKd;
            double steering;
 
-          while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 1) {
-          error = (dist - distanceSensorRight.getDistance(DistanceUnit.INCH));
+          while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 10) {
+          blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_PARTY_PALETTE);
+           error = (dist - distanceSensorRight.getDistance(DistanceUnit.INCH));
            intergral = intergral+error;
            derivative = error - last_error;
            finalKp = Kp * error;
@@ -321,16 +322,9 @@ public class Crater_Autonomous_2 extends LinearOpMode {
            telemetry.addData("Right power", rightDrive.getPower());
            telemetry.addData("error", error);
               telemetry.update();
-
-           if (error > 0) { // if the robot is to close
-               rightDrive.setPower(-0.4 + steering);
-               leftDrive.setPower(-0.4 - steering);
+               rightDrive.setPower(-0.5 + steering);
+               leftDrive.setPower(-0.5 - steering);
                sleep(25);
-           } else if (error < 0) {  // if the robot is to far
-               rightDrive.setPower(-0.4 + steering);
-               leftDrive.setPower(-0.4 - steering);
-                  sleep(25);
-           }
 
            last_error = error;
        }
