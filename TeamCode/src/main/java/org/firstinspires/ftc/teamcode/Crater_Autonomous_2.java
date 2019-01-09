@@ -9,9 +9,13 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 import org.firstinspires.ftc.robotcore.external.Func;
@@ -58,6 +62,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
     public Servo rightLiftServo = null;
     public DistanceSensor distanceSensorLeft = null;
     public DistanceSensor distanceSensorRight = null;
+    public DistanceSensor backdist = null;
     public Servo craterArmServo = null;
     public RevBlinkinLedDriver blinkin = null;
 
@@ -83,7 +88,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         distanceSensorRight = hardwareMap.get(DistanceSensor.class, "distSensorRight");
         craterArmServo = hardwareMap.get(Servo.class, "craterArmServo");
         blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
-
+        backdist = hardwareMap.get(DistanceSensor.class,"backdist");
 
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         liftMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -202,8 +207,21 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 //            leftDrive.setPower(-0.45);
 //        }
 
-        PIDWallFollower();
-                                     // driveAlongWall(0.5);
+//        PIDWallFollower();
+//
+//        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//
+//        DriveBackwards(600,0.9);
+//
+//        DropMarker();
+
+        BackwardPIDWallFollower();
+        telemetry.addData("backdist", backdist.getDistance(DistanceUnit.CM));
+        telemetry.update();
+        sleep(1000);
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_BEATS_PER_MINUTE);
          stop();
     }
 
@@ -299,15 +317,15 @@ public class Crater_Autonomous_2 extends LinearOpMode {
            double last_error = 0;
            double derivative = 0;
            double Kd = 0; //3rd
-           double Kp = 0.1; //start here Higher is sharper
+           double Kp = 0.08; //start here Higher is sharper
            double Ki = 0; //2nd
            double finalKp;
            double finalKi;
            double finalKd;
            double steering;
 
-          while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 10) {
-          blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_PARTY_PALETTE);
+          while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 20) {
+          blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
            error = (dist - distanceSensorRight.getDistance(DistanceUnit.INCH));
            intergral = intergral+error;
            derivative = error - last_error;
@@ -327,7 +345,55 @@ public class Crater_Autonomous_2 extends LinearOpMode {
                sleep(25);
 
            last_error = error;
+
        }
+    }
+    public void BackwardPIDWallFollower(){
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        double dist = 5;
+        double intergral = 0;
+        double error = 0;
+        double last_error = 0;
+        double derivative = 0;
+        double Kd = 0; //3rd
+        double Kp = 0.08; //start here Higher is sharper
+        double Ki = 0; //2nd
+        double finalKp;
+        double finalKi;
+        double finalKd;
+        double steering;
+
+        while (opModeIsActive()) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
+            error = -1*(dist - distanceSensorRight.getDistance(DistanceUnit.INCH));
+            intergral = intergral+error;
+            derivative = error - last_error;
+            finalKp = Kp * error;
+            finalKi =intergral*Ki;
+            finalKd  =derivative * Kd;
+            steering = finalKp+finalKi+finalKd;
+
+            telemetry.addData("steering",steering);
+            telemetry.addData("distance",distanceSensorRight.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Left power", leftDrive.getPower());
+            telemetry.addData("Right power", rightDrive.getPower());
+            telemetry.addData("error", error);
+            telemetry.update();
+
+
+                rightDrive.setPower(-0.5-steering);
+                leftDrive.setPower(-0.5+steering);
+                sleep(25);
+
+
+            last_error = error;
+            if (backdist.getDistance(DistanceUnit.CM)< 25 || (backdist.getDistance(DistanceUnit.CM)< 1)){
+                break;
+            }
+        }
     }
 
     //Standard Functions
@@ -387,12 +453,17 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         while (liftMotor.isBusy() && opModeIsActive()){}
     }
     public void DropMarker() {
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_BLUE);
+
         intakeFold.setTargetPosition(intakeFold.getCurrentPosition() + 800);
         intakeFold.setPower(0.5);
         while (intakeFold.isBusy() && opModeIsActive()) {
         }
-        sweeperMotor.setPower(0.6);
-        sleep(500);
+        sweeperMotor.setPower(-1);
+        sleep(700);
+        sweeperMotor.setPower(0);
+
+        ResetIntake();
     }
     public void ResetIntake() {
         intakeFold.setTargetPosition(0);
@@ -667,7 +738,6 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         intakeFold.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        sweeperMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         lynchpin.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
     public void SetModePowerDrive() {

@@ -96,14 +96,14 @@ public class TeleOp extends LinearOpMode {
 
                leftPower = gamepad1.right_stick_y;
                rightPower = gamepad1.left_stick_y;
-
+               //Activates sweeper motor to spit out minerals
                if (gamepad1.b) {
                    sweeperMotor.setPower(0.6);
                } else {
                    sweeperMotor.setPower(0);
                }
 
-               //Activates sweeper motor to spit out minerals
+
                if (gamepad1.a) {
                    sweeperMotor.setPower(-1);
                } else {
