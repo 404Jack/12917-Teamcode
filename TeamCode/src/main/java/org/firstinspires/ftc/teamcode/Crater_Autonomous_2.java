@@ -325,14 +325,10 @@ public class Crater_Autonomous_2 extends LinearOpMode {
            if (error > 0) { // if the robot is to close
                rightDrive.setPower(-0.4 + steering);
                leftDrive.setPower(-0.4 - steering);
-               telemetry.addData("close", + steering);
-               telemetry.update();
                sleep(25);
            } else if (error < 0) {  // if the robot is to far
-               rightDrive.setPower(-0.4 - steering);
-               leftDrive.setPower(-0.4 + steering);
-                  telemetry.addData("far" , -steering);
-                  telemetry.update();
+               rightDrive.setPower(-0.4 + steering);
+               leftDrive.setPower(-0.4 - steering);
                   sleep(25);
            }
 
