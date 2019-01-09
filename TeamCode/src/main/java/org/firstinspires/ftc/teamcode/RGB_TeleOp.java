@@ -10,9 +10,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Tournament_TeleOp")
-public class TeleOp extends LinearOpMode {
-
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="RGB_Testt")
+public class RGB_TeleOp extends LinearOpMode {
 
     // Declare OpMode members.
     public DcMotor leftDrive = null;
@@ -28,7 +27,6 @@ public class TeleOp extends LinearOpMode {
     public DistanceSensor distanceSensorRight = null;
     public Servo craterArmServo = null;
     public RevBlinkinLedDriver blinkin = null;
-    public boolean ledspam = false;
 
     @Override
     public void runOpMode() {
@@ -78,137 +76,123 @@ public class TeleOp extends LinearOpMode {
         intakeSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeFold.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Wait for the game to start (driver presses PLAY)
-        craterArmServo.setPosition(0);
-
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
-
         waitForStart();
 
+        blinkin.setPattern((RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES));
+        // run until the end of the match (driver presses STOP)
+        while (opModeIsActive()) {
 
-           blinkin.setPattern((RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES));
+            craterArmServo.setPosition(0);
 
-           while (opModeIsActive()) {
-               // Setup a variable for each drive wheel to save power level for telemetry
+            // Setup a variable for each drive wheel to save power level for telemetry
 
-               /////////GAMEPAD NUMBER ONE
-               double leftPower;
-               double rightPower;
+            /////////GAMEPAD NUMBER ONE
+            double leftPower;
+            double rightPower;
 
-               leftPower = gamepad1.right_stick_y;
-               rightPower = gamepad1.left_stick_y;
+            leftPower = gamepad1.right_stick_y;
+            rightPower = gamepad1.left_stick_y;
 
-               if (gamepad1.b) {
-                   sweeperMotor.setPower(0.6);
-               } else {
-                   sweeperMotor.setPower(0);
-               }
+            if (gamepad1.b) {
+               blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+            } else {
+                sweeperMotor.setPower(0);
+            }
 
-               //Activates sweeper motor to spit out minerals
-               if (gamepad1.a) {
-                   sweeperMotor.setPower(-1);
-               } else {
-                   sweeperMotor.setPower(0);
-               }
+            //Activates sweeper motor to spit out minerals
+            if (gamepad1.a) {
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
+            } else {
+                sweeperMotor.setPower(0);
+            }
 
-               if (gamepad1.x) {
-                   intakeFold.setTargetPosition(1050);
-                   intakeFold.setPower(0.4);
+            if (gamepad1.x) {
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+            }
 
-               }
+            if (gamepad1.start) {
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+            }
 
-               if (gamepad1.start) {
-                   intakeFold.setTargetPosition(600);
-                   intakeFold.setPower(0.4);
-               }
+            if (gamepad1.y) {
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_VIOLET);
+            }
 
-               if (gamepad1.y) {
-                   intakeFold.setTargetPosition(160);
-                   intakeFold.setPower(1);
-               }
 
-           /* if (gamepad1.left_bumper) {
-                intakeSlideMotor.setTargetPosition(-700);
-                intakeSlideMotor.setPower(-0.4);
+           if (gamepad1.left_bumper) {
+               blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
             }
 
            if (gamepad1.right_bumper) {
                 intakeSlideMotor.setTargetPosition(0);
                 intakeSlideMotor.setPower(0.4);
             }
-*/
 
-               //////GAMEPAD NUMBER TWO
+            //////GAMEPAD NUMBER TWO
 
 
-               //Brings the lift up all the way
-               if (gamepad2.y) {
-                   liftMotor.setTargetPosition(5500);
-                   liftMotor.setPower(0.8);
-                   blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-                   ledspam = false;
-               }
+            //Brings the lift up all the way
+            if (gamepad2.y) {
+                liftMotor.setTargetPosition(5500);
+                liftMotor.setPower(0.8);
+            }
 
-               if (gamepad2.start) {
-                   liftMotor.setTargetPosition(liftMotor.getCurrentPosition() - 200);
-                   liftMotor.setPower(0.4);
-                   blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_BEATS_PER_MINUTE);
-               }
+            if (gamepad2.start) {
+                liftMotor.setTargetPosition(liftMotor.getCurrentPosition() -200);
+                liftMotor.setPower(0.4);
+            }
 
-               //brings lift up half-way
-               if (gamepad2.x) {
-                   liftMotor.setTargetPosition(2900);
-                   liftMotor.setPower(0.6);
-                   ledspam = true;
+            //brings lift up half-way
+            if (gamepad2.x) {
+                liftMotor.setTargetPosition(2900);
+                liftMotor.setPower(0.6);
+            }
+            //brings lift to the bottom of the slide
 
-               }
-               //brings lift to the bottom of the slide
+            if (gamepad2.a) {
+                liftMotor.setTargetPosition(0);
+            }
+            //Fail Safe
+            if (gamepad2.b) {
+                liftMotor.setTargetPosition(liftMotor.getCurrentPosition() + 200);
+                liftMotor.setPower(0.4);
+            } //Fail Safe
 
-               if (gamepad2.a) {
-                   liftMotor.setTargetPosition(0);
-                   if (ledspam = true) {
-                       blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_BEATS_PER_MINUTE);
-                   }
-               }
-               //Fail Safe
-               if (gamepad2.b) {
-                   liftMotor.setTargetPosition(liftMotor.getCurrentPosition() + 200);
-                   liftMotor.setPower(0.4);
-                   blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_BEATS_PER_MINUTE);
-               } //Fail Safe
+            //Activates the sweeper motor to suck in minerals
 
-               //Activates the sweeper motor to suck in minerals
+            if (gamepad2.left_bumper) {
+                leftLiftServo.setPosition(0);
+                rightLiftServo.setPosition(1);
+            }
 
-               if (gamepad2.left_bumper) {
-                   leftLiftServo.setPosition(0);
-                   rightLiftServo.setPosition(1);
-               }
+            if (gamepad2.right_bumper) {
+                leftLiftServo.setPosition(0.7);
+                rightLiftServo.setPosition(0.3);
+            }
 
-               if (gamepad2.right_bumper) {
-                   leftLiftServo.setPosition(0.7);
-                   rightLiftServo.setPosition(0.3);
-               }
+            if (gamepad2.dpad_up) {
+                leftLiftServo.setPosition(0.5);
+                rightLiftServo.setPosition(0.5);
+            }
 
-               if (gamepad2.dpad_up) {
-                   leftLiftServo.setPosition(0.5);
-                   rightLiftServo.setPosition(0.5);
-               }
+            if (gamepad2.right_stick_button) {
+                leftLiftServo.setPosition(0.1);
+                rightLiftServo.setPosition(0.9);
+            }
 
-               if (gamepad2.right_stick_button) {
-                   leftLiftServo.setPosition(0.1);
-                   rightLiftServo.setPosition(0.9);
-               }
+            if (gamepad2.dpad_down) {
+                lynchpin.setPower(0.5);
+            } else {
+                lynchpin.setPower(0);
+            }
 
-               if (gamepad2.dpad_down) {
-                   lynchpin.setPower(0.5);
-               } else {
-                   lynchpin.setPower(0);
-               }
+            leftDrive.setPower(leftPower);
+            rightDrive.setPower(rightPower);
 
-               leftDrive.setPower(leftPower);
-               rightDrive.setPower(rightPower);
 
-           }
 
+        }
 
     }
 }

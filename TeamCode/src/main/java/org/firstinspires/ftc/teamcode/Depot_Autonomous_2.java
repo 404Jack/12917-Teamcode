@@ -33,6 +33,7 @@ import com.disnodeteam.dogecv.Dogeforia;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -82,6 +83,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
     public DistanceSensor distanceSensorLeft = null;
     public DistanceSensor distanceSensorRight = null;
     public Servo craterArmServo = null;
+    public RevBlinkinLedDriver blinkin = null;
 
     public double dist1;
     public double dist2;
@@ -103,6 +105,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
         distanceSensorLeft = hardwareMap.get(DistanceSensor.class, "distSensorLeft");
         distanceSensorRight = hardwareMap.get(DistanceSensor.class, "distSensorRight");
         craterArmServo = hardwareMap.get(Servo.class, "craterArmServo");
+        blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
 
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         liftMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -140,7 +143,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
             idle();
         }
 //
-
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
         telemetry.addData("Status", "Put me up");
         telemetry.update();
 
