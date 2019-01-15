@@ -46,6 +46,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -162,6 +163,17 @@ public class Depot_Autonomous_2 extends LinearOpMode
         telemetry.update();
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
 
+        if (getBatteryVoltage() < 13.1) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
+            telemetry.addData("Status, Put me up", "CHANGE BATTERY SOON");
+            telemetry.update();
+        }
+        if (getBatteryVoltage() < 12.9) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+            telemetry.addData("CHANGE BATTERY NOW","Status, Put me up");
+            telemetry.update();
+        }
+
         waitForStart();
 
         LowerIntake();
@@ -173,8 +185,6 @@ public class Depot_Autonomous_2 extends LinearOpMode
         SetModeRUN_TO_POSITION();
 
         LeftGyroTurn(33, 0.5);
-
-        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
 
         if (mineral == 1) {
             //Right
@@ -190,7 +200,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
             BrakeDrivetrain();
 
-            LeftGyroTurn(93, 0.8);
+            LeftGyroTurn(86, 0.6);
         }
         else if (mineral == 2) {
             //Center
@@ -229,7 +239,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
         DistanceSensorDriveForward(10);
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        while (rangeSensorBack.cmUltrasonic()/2.54 > 10){
+        while (rangeSensorBack.cmUltrasonic()/2.54 > 11){
             rightDrive.setPower(0.35);
             leftDrive.setPower(-0.35);
             telemetry.addData("Ultrasonic CM reading", rangeSensorBack.cmUltrasonic()/2.54);
@@ -448,6 +458,8 @@ public class Depot_Autonomous_2 extends LinearOpMode
         liftMotor.setTargetPosition(2900);
         liftMotor.setPower(1);
         while (liftMotor.isBusy()&& opModeIsActive()){}
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
 
         sleep(700);
         if(detector.isFound()){
@@ -781,6 +793,19 @@ public class Depot_Autonomous_2 extends LinearOpMode
     public void BrakeDrivetrain(){
         leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+    double getBatteryVoltage() {
+        double result = Double.POSITIVE_INFINITY;
+        for (VoltageSensor sensor : hardwareMap.voltageSensor) {
+            double voltage = sensor.getVoltage();
+            if (voltage > 0) {
+                result = Math.min(result, voltage);
+
+            }
+
+        }
+        return result;
     }
     void composeTelemetry() {
 
