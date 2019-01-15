@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.disnodeteam.dogecv.Dogeforia;
+import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -7,12 +11,31 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Tournament_TeleOp")
 public class TeleOp extends LinearOpMode {
 
+
+
+    // Detector object
+    private GoldAlignDetector detector;
+    WebcamName webcamName;
+    Dogeforia vuforia;
+
+    // The IMU sensor object
+    BNO055IMU imu;
+
+    // State used for updating telemetry
+    Orientation angles;
+    Acceleration gravity;
+    private double TOLERANCE = 0.25;
+    private double GAIN = 0.05;
 
     // Declare OpMode members.
     public DcMotor leftDrive = null;
@@ -24,19 +47,21 @@ public class TeleOp extends LinearOpMode {
     public DcMotor lynchpin = null;
     public Servo leftLiftServo = null;
     public Servo rightLiftServo = null;
+    public Servo craterArmServo = null;
+    public ModernRoboticsI2cRangeSensor rangeSensor = null;
     public DistanceSensor distanceSensorLeft = null;
     public DistanceSensor distanceSensorRight = null;
-    public Servo craterArmServo = null;
+    public TouchSensor frontbutton = null;
+    public TouchSensor backbutton = null;
     public RevBlinkinLedDriver blinkin = null;
     public boolean ledspam = false;
 
+    public double heading = 0;
+    public double sensorHeading = 0;
+
     @Override
-    public void runOpMode() {
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
+    public void runOpMode() throws InterruptedException {
+
         leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
         rightDrive = hardwareMap.get(DcMotor.class, "rightDrive");
         liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
@@ -46,10 +71,14 @@ public class TeleOp extends LinearOpMode {
         lynchpin = hardwareMap.get(DcMotor.class, "lynchpin");
         leftLiftServo = hardwareMap.get(Servo.class, "leftLiftServo");
         rightLiftServo = hardwareMap.get(Servo.class, "rightLiftServo");
-        blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
         distanceSensorLeft = hardwareMap.get(DistanceSensor.class, "distSensorLeft");
         distanceSensorRight = hardwareMap.get(DistanceSensor.class, "distSensorRight");
         craterArmServo = hardwareMap.get(Servo.class, "craterArmServo");
+        blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+        frontbutton = hardwareMap.get(TouchSensor.class,"frontbutton");
+        backbutton = hardwareMap.get(TouchSensor.class,"backbutton");
+        rangeSensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"rangeSensor");
+
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery

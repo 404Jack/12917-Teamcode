@@ -27,18 +27,25 @@ package org.firstinspires.ftc.teamcode;/* Copyright (c) 2017 FIRST. All rights r
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import com.disnodeteam.dogecv.ActivityViewDisplay;
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.Dogeforia;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
+import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -54,7 +61,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 import java.util.Locale;
 
-@Autonomous(name="Depot Side Autonomous_2", group="DogeCV")
+@Autonomous(name="Depot Side Autonomous 2", group="DogeCV")
 
 public class Depot_Autonomous_2 extends LinearOpMode
 {
@@ -80,18 +87,22 @@ public class Depot_Autonomous_2 extends LinearOpMode
     public DcMotor lynchpin = null;
     public Servo leftLiftServo = null;
     public Servo rightLiftServo = null;
+    public Servo craterArmServo = null;
+    public ModernRoboticsI2cRangeSensor rangeSensor = null;
     public DistanceSensor distanceSensorLeft = null;
     public DistanceSensor distanceSensorRight = null;
-    public Servo craterArmServo = null;
+    public TouchSensor frontbutton = null;
+    public TouchSensor backbutton = null;
     public RevBlinkinLedDriver blinkin = null;
+    public ModernRoboticsI2cRangeSensor rangeSensorBack = null;
 
-    public double dist1;
-    public double dist2;
+    public int mineral = 0;
     public double heading = 0;
     public double sensorHeading = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
+        TurnOnDogeCV();
 
         leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
         rightDrive = hardwareMap.get(DcMotor.class, "rightDrive");
@@ -106,9 +117,13 @@ public class Depot_Autonomous_2 extends LinearOpMode
         distanceSensorRight = hardwareMap.get(DistanceSensor.class, "distSensorRight");
         craterArmServo = hardwareMap.get(Servo.class, "craterArmServo");
         blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
-
+        frontbutton = hardwareMap.get(TouchSensor.class,"frontbutton");
+        backbutton = hardwareMap.get(TouchSensor.class,"backbutton");
+        rangeSensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"rangeSensor");
+        rangeSensorBack = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "rangeSensorBack");
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         liftMotor.setDirection(DcMotor.Direction.REVERSE);
+
 
         //Set all motors to run to position and reset encoders
         SetModeRUN_TO_POSITION();
@@ -142,10 +157,10 @@ public class Depot_Autonomous_2 extends LinearOpMode
             sleep(50);
             idle();
         }
-//
-        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
+
         telemetry.addData("Status", "Put me up");
         telemetry.update();
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
 
         waitForStart();
 
@@ -153,119 +168,91 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         LowerFromLander();
 
-        ResetLift();
-
         ResetIntake();
 
-        LeftTurn(300,0.3);
+        SetModeRUN_TO_POSITION();
 
-        init_a();
+        LeftGyroTurn(33, 0.5);
 
-        sleep(4000);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
 
-        if (detector.getXPosition() == 0) {
-            telemetry.addData("Gold Mineral Position", "Left");
-            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
-            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
-            telemetry.update();
+        if (mineral == 1) {
+            //Right
+            RightGyroTurn(-20, 0.4);
 
-            sleep(1000);
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
-            LeftGyroTurn(43, 0.2);
+            DriveForward(2150, 0.65);
 
-            LeftGyroTurn(75,0.2);
+            DriveBackwards(1950, 0.65);
 
-            DriveForward(3100,0.9);
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
 
-            RightGyroTurn(145,0.4);
+            BrakeDrivetrain();
 
-            DriveBackwards(2500,0.9);
-
-            LowerIntake();
-
-            DropMarker();
-
-            sleep(400);
-
-            IntakeResetForwardDrive(600,0.9);
-
-            LeftTurn(200,1);
-
-            DriveForward(400,1);
-
-            stop();
-
-
+            LeftGyroTurn(93, 0.8);
         }
-        else if (detector.getXPosition() < 325) {
+        else if (mineral == 2) {
+            //Center
+            LeftGyroTurn(44, 0.4);
 
-            telemetry.addData("Gold Mineral Position", "Right");
-            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
-            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
-            telemetry.update();
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
+            DriveForward(1900, 0.6);
 
+            DriveBackwards(1800, 0.6);
 
-            sleep(1000);
+            BrakeDrivetrain();
 
-            LeftGyroTurn(45,0.3);
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
 
-            RightGyroTurn(-15,0.2);
+            LeftGyroTurn(86, 0.6);
+        } else if (mineral == 3) {
+            //Left
+            LeftGyroTurn(73, 0.5);
 
-            DriveForward(3100,0.8);
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
-            RightGyroTurn(100,0.4);
+            DriveForward(2300, 0.6);
 
-            DriveBackwards(2200,0.9);
+            DriveBackwards(1900, 0.6);
 
-            LowerIntake();
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
 
-            DropMarker();
+            BrakeDrivetrain();
 
-            RightTurn(1550,0.7);
-
-            IntakeResetForwardDrive(1200,0.8);
-
-            LynchpinReset();
-
-            stop();
-
+            LeftGyroTurn(94, 0.6);
         }
-        else if (detector.getXPosition() > 325) {
-            telemetry.addData("Gold Mineral Position", "Center");
-            telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
-            telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
+
+        DriveForward(1000,0.8);
+
+        DistanceSensorDriveForward(10);
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        while (rangeSensorBack.cmUltrasonic()/2.54 > 10){
+            rightDrive.setPower(0.35);
+            leftDrive.setPower(-0.35);
+            telemetry.addData("Ultrasonic CM reading", rangeSensorBack.cmUltrasonic()/2.54);
             telemetry.update();
-
-            sleep(2000);
-
-            LeftGyroTurn(45, 0.4);
-
-            CenterMineralAdjustment();
-
-            DriveForward(3200, 0.9);
-
-            RightGyroTurn(135, 0.4);
-
-            DriveBackwards(1550, 0.9);
-
-            LowerIntake();
-
-            DropMarker();
-
-            sleep(400);
-
-            IntakeResetForwardDrive(600,0.9);
-
-            LeftTurn(200,1);
-
-            stop();
-
         }
+
+
+
+
+//        BackwardPIDWallFollower();
+//
+//        DriveForward(600,0.9);
+//
+//        LowerIntake();
+//
+//        DropMarker();
+//
+//        PIDWallFollower();
+
+        stop();
     }
 
-
-    public void init_a() {
+    public void TurnOnDogeCV() {
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
 
@@ -284,14 +271,14 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         // Set up detector
         detector = new GoldAlignDetector(); // Create detector
-        detector.init(hardwareMap.appContext,CameraViewDisplay.getInstance(), 0, true);
+        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, true);
         // Initialize it with the app context and camera
         detector.useDefaults(); // Set detector to use default settings
 
         // Optional tuning
-        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignSize = 120; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
         detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
-        detector.downscale = 0.4; // How much to downscale the input frames
+        detector.downscale = 0.5; // How much to downscale the input frames
 
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
         //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
@@ -308,16 +295,18 @@ public class Depot_Autonomous_2 extends LinearOpMode
         vuforia.start();
     }
 
-    /*
-     * Code to run REPEATEDLY when the driver hits PLAY
-     */
-//    @Override
-//    public void loop() {
-//        telemetry.addData("IsAligned" , detector.getAligned()); // Is the bot aligned with the gold mineral?
-//        telemetry.addData("X Pos" , detector.getXPosition()); // Gold X position.
-//    }
-
-
+    public void DistanceSensorDriveForward(double inches) {
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        while (distanceSensorRight.getDistance(DistanceUnit.INCH) > inches) {
+            leftDrive.setPower(-0.6);
+            rightDrive.setPower(-0.6);
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
     public void DriveForward(int distance , double speed){
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
@@ -348,30 +337,145 @@ public class Depot_Autonomous_2 extends LinearOpMode
         rightDrive.setPower(speed);
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
+    public void PIDWallFollower(){
+
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        double dist = 5;
+        double intergral = 0;
+        double error = 0;
+        double last_error = 0;
+        double derivative = 0;
+        double Kd = 0; //3rd
+        double Kp = 0.05; //start here Higher is sharper
+        double Ki = 0; //2nd
+        double finalKp;
+        double finalKi;
+        double finalKd;
+        double steering;
+
+        while (distanceSensorRight.getDistance(DistanceUnit.CM) > 100) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
+            error = (dist - rangeSensorBack.cmUltrasonic()/2.54);
+            intergral = intergral+error;
+            derivative = error - last_error;
+            finalKp = Kp * error;
+            finalKi =intergral*Ki;
+            finalKd  =derivative * Kd;
+            steering = finalKp+finalKi+finalKd;
+
+            telemetry.addData("steering",steering);
+            telemetry.addData("distance",distanceSensorRight.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Left power", leftDrive.getPower());
+            telemetry.addData("Right power", rightDrive.getPower());
+            telemetry.addData("error", error);
+            telemetry.update();
+            rightDrive.setPower(-0.5 + steering);
+            leftDrive.setPower(-0.5 - steering);
+            sleep(25);
+
+            last_error = error;
+
+        }
+        craterArmServo.setPosition(0);
+        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+    }
+    public void BackwardPIDWallFollower(){
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        double dist = 4;
+        double intergral = 0;
+        double error = 0;
+        double last_error = 0;
+        double derivative = 0;
+        double Kd = 0; //3rd
+        double Kp = 0.05; //start here Higher is sharper
+        double Ki = 0; //2nd
+        double finalKp;
+        double finalKi;
+        double finalKd;
+        double steering;
+
+        while (!backbutton.isPressed()) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
+            error = (dist - (rangeSensor.cmUltrasonic()/2.54));
+            intergral = intergral+error;
+            derivative = error - last_error;
+            finalKp = Kp * error;
+            finalKi =intergral*Ki;
+            finalKd  =derivative * Kd;
+            steering = finalKp+finalKi+finalKd;
+
+            telemetry.addData("steering",steering);
+            telemetry.addData("distance",distanceSensorRight.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Left power", leftDrive.getPower());
+            telemetry.addData("Right power", rightDrive.getPower());
+            telemetry.addData("error", error);
+            telemetry.update();
+
+            if (error < 0) { // if the robot is to close
+                rightDrive.setPower(-0.4 + steering);
+                leftDrive.setPower(-0.4 - steering);
+                sleep(25);
+            } else if (error > 0) {  // if the robot is to far
+                rightDrive.setPower(-0.4 + steering);
+                leftDrive.setPower(-0.4 - steering);
+                sleep(25);
+            }
+
+
+
+        }
+        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+    }
 
     //Standard Functions
     public void LowerFromLander(){
-          liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-          lynchpin.setTargetPosition(525);
-          liftMotor.setPower(-0.8);
-          lynchpin.setPower(1);
-          while (lynchpin.isBusy()&& opModeIsActive()){}
-       liftMotor.setPower(0);
-        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        lynchpin.setPower(1);
+        liftMotor.setPower(-0.8);
+        lynchpin.setTargetPosition(525);
+        //liftMotor.setTargetPosition(25);
+        while (lynchpin.isBusy()&& opModeIsActive()){}
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
         //Let robot down
         liftMotor.setTargetPosition(2900);
-        liftMotor.setPower(0.6);
+        liftMotor.setPower(1);
         while (liftMotor.isBusy()&& opModeIsActive()){}
 
-        liftMotor.setTargetPosition(liftMotor.getCurrentPosition() + 150);
-        liftMotor.setPower(0.4);
-        while (liftMotor.isBusy() && opModeIsActive()){}
+        sleep(700);
+        if(detector.isFound()){
+           if (detector.getXPosition() < 250) {
+               mineral = 1;
+           }else if (detector.getXPosition() > 250){
+               mineral = 2;
+           }
+        }else {
+            mineral = 3;
+        }
 
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 500);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 500);
-        leftDrive.setPower(0.8);
-        rightDrive.setPower(0.8);
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 400);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 400);
+        leftDrive.setPower(1);
+        rightDrive.setPower(1);
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 300);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 300);
+        liftMotor.setTargetPosition(0);
+        liftMotor.setPower(1);
+        leftDrive.setPower(1);
+        rightDrive.setPower(1);
+        while (liftMotor.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+        sleep(400);
     }
     public void LowerIntake() {
         intakeFold.setTargetPosition(intakeFold.getCurrentPosition() + 400);
@@ -379,30 +483,42 @@ public class Depot_Autonomous_2 extends LinearOpMode
         while (intakeFold.isBusy() && opModeIsActive()) {
         }
     }
+    public void Sampledrive(int distance, double speed) {
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
+        leftDrive.setPower(speed);
+        rightDrive.setPower(speed);
+        while (leftDrive.isBusy() & rightDrive.isBusy() &opModeIsActive());
 
-
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + distance);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + distance);
+        ResetIntake();
+        leftDrive.setPower(speed);
+        rightDrive.setPower(speed);
+        while (intakeFold.isBusy()& leftDrive.isBusy() & rightDrive.isBusy() &opModeIsActive());
+    }
     public void ResetLift(){
         liftMotor.setTargetPosition(0);
         liftMotor.setPower(0.9);
         while (liftMotor.isBusy() && opModeIsActive()){}
     }
     public void DropMarker() {
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_BLUE);
+
         leftLiftServo.setPosition(0.7);
         rightLiftServo.setPosition(0.3);
         sleep(1900);
-        leftLiftServo.setPosition(0);
-        rightLiftServo.setPosition(1);
+
+       leftLiftServo.setPosition(0);
+       rightLiftServo.setPosition(1);
+
+        ResetIntake();
     }
     public void ResetIntake() {
         intakeFold.setTargetPosition(0);
         intakeFold.setPower(0.4);
         while (intakeFold.isBusy() && opModeIsActive()) {
         }
-    }
-    public void LynchpinReset(){
-        lynchpin.setTargetPosition(0);
-        lynchpin.setPower(1);
-        while (lynchpin.isBusy()&& opModeIsActive()){}
     }
     public void IntakeResetForwardDrive(int distance , double speed) {
         intakeFold.setTargetPosition(0);
@@ -413,6 +529,69 @@ public class Depot_Autonomous_2 extends LinearOpMode
         intakeFold.setPower(0.4);
         while (intakeFold.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() && opModeIsActive()) {
         }
+    }
+    public void GoldAlign(){
+        boolean aligned = false;
+
+        while (!detector.isFound()) {
+            leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 150);
+            rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 150);
+            leftDrive.setPower(0.05);
+            rightDrive.setPower(0.05);
+            if (!aligned) {
+                aligned = detector.getAligned();
+
+            } else {
+                break;
+            }
+            sleep(100);
+            leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+
+        while (!detector.getAligned() && !aligned) {
+            leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 75);
+            rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 75);
+            leftDrive.setPower(0.03);
+            rightDrive.setPower(0.03);
+
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+    }
+    public void DriveToDepot(double speed) {
+        SetModePowerDrive();
+        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 31){
+
+            while (distanceSensorRight.getDistance(DistanceUnit.INCH) > 5) {
+                leftDrive.setPower(-speed);
+                rightDrive.setPower(-speed + 0.1);
+            }
+            while (distanceSensorRight.getDistance(DistanceUnit.INCH) < 5) {
+                leftDrive.setPower(-speed);
+                rightDrive.setPower(-speed + 0.1);
+            }
+        }
+        SetModeRUN_TO_POSITION();
+
+    }
+    public void DriveToCrater(double speed) {
+        SetModePowerDrive();
+        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 34){
+
+            if (distanceSensorRight.getDistance(DistanceUnit.INCH) > 5) {
+                leftDrive.setPower(speed);
+                rightDrive.setPower(speed - 0.1);
+            }
+            if (distanceSensorRight.getDistance(DistanceUnit.INCH) < 5) {
+                leftDrive.setPower(speed);
+                rightDrive.setPower(speed - 0.1);
+            }
+        }
+        SetModeRUN_TO_POSITION();
+
     }
 
     //Gyro Methods
@@ -438,7 +617,6 @@ public class Depot_Autonomous_2 extends LinearOpMode
         sensorHeading = currentHeading;
         return heading;
     }
-
 
     public void GyroTurn( double degrees, double speed) {
         resetGyro();
@@ -573,83 +751,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
 
     }
-    public void CenterMineralAdjustment(){
-        double Lcorrect = distanceSensorLeft.getDistance(DistanceUnit.MM) - 857;
-        double Rcorrect = distanceSensorRight.getDistance(DistanceUnit.MM) - 857;
-        double preHypotenuse = (Lcorrect * Lcorrect) + (Rcorrect * Rcorrect);
-        double hypotenuse = Math.sqrt(preHypotenuse);
-        double correctionAngle = Math.acos((hypotenuse * hypotenuse + Lcorrect * Lcorrect - Rcorrect * Rcorrect) / (2 * hypotenuse * Lcorrect));
 
-
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 900);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 900);
-        leftDrive.setPower(0.2);
-        rightDrive.setPower(-0.2);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > -correctionAngle + 44 & leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-
-            telemetry.addData("heading", new Func<String>() {
-                @Override
-                public String value() {
-                    return formatAngle(angles.angleUnit, angles.firstAngle);
-                }
-            });
-            telemetry.update();
-        }}
-    public void LeftMineralAdjustment(){
-        double Lcorrect = distanceSensorLeft.getDistance(DistanceUnit.MM) - 594;
-        double Rcorrect = distanceSensorRight.getDistance(DistanceUnit.MM) - 1120;
-        double preHypotenuse = (Lcorrect * Lcorrect) + (Rcorrect * Rcorrect);
-        double hypotenuse = Math.sqrt(preHypotenuse);
-        double correctionAngle = Math.acos((hypotenuse * hypotenuse + Lcorrect * Lcorrect - Rcorrect * Rcorrect) / (2 * hypotenuse * Lcorrect));
-
-
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 900);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 900);
-        leftDrive.setPower(0.2);
-        rightDrive.setPower(-0.2);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > -correctionAngle + 44 & leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-
-            telemetry.addData("heading", new Func<String>() {
-                @Override
-                public String value() {
-                    return formatAngle(angles.angleUnit, angles.firstAngle);
-                }
-            });
-            telemetry.update();
-        }}
-    public void RightMineralAdjustment(){
-        double Lcorrect = distanceSensorLeft.getDistance(DistanceUnit.MM) - 1120;
-        double Rcorrect = distanceSensorRight.getDistance(DistanceUnit.MM) - 594;
-        double preHypotenuse = (Lcorrect * Lcorrect) + (Rcorrect * Rcorrect);
-        double hypotenuse = Math.sqrt(preHypotenuse);
-        double correctionAngle = Math.acos((hypotenuse * hypotenuse + Lcorrect * Lcorrect - Rcorrect * Rcorrect) / (2 * hypotenuse * Lcorrect));
-
-
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 900);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 900);
-        leftDrive.setPower(0.2);
-        rightDrive.setPower(-0.2);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > -correctionAngle + 44 & leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-
-            telemetry.addData("heading", new Func<String>() {
-                @Override
-                public String value() {
-                    return formatAngle(angles.angleUnit, angles.firstAngle);
-                }
-            });
-            telemetry.update();
-        }}
-    public void craterArmDeploy(){
-
-
-        craterArmServo.setPosition(0.5);
-    }
     //Mode set Protocols
     public void SetModeRUN_TO_POSITION(){
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -664,15 +766,22 @@ public class Depot_Autonomous_2 extends LinearOpMode
         intakeSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         intakeFold.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        sweeperMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         lynchpin.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
+    public void SetModePowerDrive() {
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
     public void SetZeroPowerBrake(){
         liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeFold.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
-
+    public void BrakeDrivetrain(){
+        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
     void composeTelemetry() {
 
 
