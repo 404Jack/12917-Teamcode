@@ -231,19 +231,24 @@ public class Depot_Autonomous_2 extends LinearOpMode
 //
 //            BrakeDrivetrain();
 //
-//            LeftGyroTurn(94, 0.6);
+//            LeftGyroTurn(89, 0.6);
 //        }
 //
 //        DriveForward(1000,0.8);
 //
-//        DistanceSensorDriveForward(10);
+//       LeftGyroTurn(140,0.5);
+//
 //        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 //        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        while (rangeSensorBack.cmUltrasonic()/2.54 > 11){
+//        double distance = 30;
+//        double lastdistance = 60;
+//        while (distance < lastdistance){
+//         distance  = rangeSensorBack.cmUltrasonic()/2.54;
 //            rightDrive.setPower(0.35);
 //            leftDrive.setPower(-0.35);
 //            telemetry.addData("Ultrasonic CM reading", rangeSensorBack.cmUltrasonic()/2.54);
 //            telemetry.update();
+//            lastdistance  = rangeSensorBack.cmUltrasonic()/2.54;
 //        }
 //
 //
