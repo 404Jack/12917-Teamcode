@@ -59,7 +59,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import java.util.Locale;
 
 @Autonomous(name="Depot Side Autonomous", group="DogeCV")
-
+@Disabled
 public class Depot_Autonomous extends LinearOpMode
 {
     // Detector object

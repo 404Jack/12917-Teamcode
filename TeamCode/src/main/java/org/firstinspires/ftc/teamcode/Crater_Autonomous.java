@@ -49,6 +49,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name= "Crater Side Autonomous" , group="Autonomous")
+@Disabled
 public class Crater_Autonomous extends LinearOpMode {
 
     // Detector object

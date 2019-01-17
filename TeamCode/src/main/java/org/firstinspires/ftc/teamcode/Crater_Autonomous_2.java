@@ -1,25 +1,52 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode;/* Copyright (c) 2017 FIRST. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted (subject to the limitations in the disclaimer below) provided that
+ * the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list
+ * of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice, this
+ * list of conditions and the following disclaimer in the documentation and/or
+ * other materials provided with the distribution.
+ *
+ * Neither the name of FIRST nor the names of its contributors may be used to endorse or
+ * promote products derived from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
+ * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
-
-import android.text.method.Touch;
-
+import com.disnodeteam.dogecv.ActivityViewDisplay;
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.Dogeforia;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
+import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
-import com.qualcomm.robotcore.util.ElapsedTime;
-
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -32,14 +59,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.opencv.photo.CalibrateRobertson;
 
 import java.util.Locale;
 
+@Autonomous(name="Crater Side Autonomous 2", group="DogeCV")
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name= "Crater Side Autonomous 2" , group="Autonomous")
-public class Crater_Autonomous_2 extends LinearOpMode {
-
+public class Crater_Autonomous_2 extends LinearOpMode
+{
     // Detector object
     private GoldAlignDetector detector;
     WebcamName webcamName;
@@ -51,8 +77,6 @@ public class Crater_Autonomous_2 extends LinearOpMode {
     // State used for updating telemetry
     Orientation angles;
     Acceleration gravity;
-    private double TOLERANCE = 0.25;
-    private double GAIN = 0.05;
 
     // Declare OpMode members.
     public DcMotor leftDrive = null;
@@ -73,6 +97,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
     public RevBlinkinLedDriver blinkin = null;
     public ModernRoboticsI2cRangeSensor rangeSensorBack = null;
 
+    public int mineral = 0;
     public double heading = 0;
     public double sensorHeading = 0;
 
@@ -138,6 +163,17 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         telemetry.update();
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
 
+        if (getBatteryVoltage() < 13.1) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
+            telemetry.addData("Status, Put me up", "CHANGE BATTERY SOON");
+            telemetry.update();
+        }
+        if (getBatteryVoltage() < 12.9) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+            telemetry.addData("CHANGE BATTERY NOW","Status, Put me up");
+            telemetry.update();
+        }
+
         waitForStart();
 
         LowerIntake();
@@ -148,108 +184,89 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
         SetModeRUN_TO_POSITION();
 
-        LeftGyroTurn(37, 0.5);
+        LeftGyroTurn(33, 0.5);
 
-        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
-
-        sleep(500);
-        if (detector.isFound()) {
-            if (detector.getXPosition() > 325) {
-                telemetry.addData("XPosGold",detector.getXPosition());
-                telemetry.update();
-                sleep(1000);
-                //Center
-                LeftGyroTurn(45, 0.7);
-
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-
-                DriveForward(1900, 0.8);
-
-                DriveBackwards(1700, 0.8);
-
-                BrakeDrivetrain();
-
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-
-                LeftGyroTurn(95, 0.8);
-            } else if (detector.getXPosition() < 325) {
-
-                telemetry.addData("XPosGold",detector.getXPosition());
-                telemetry.update();
-                sleep(1000);
-
-                //Right
-                RightGyroTurn(-11, 0.7);
-
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-
-                DriveForward(2050, 0.8);
-
-                DriveBackwards(1900, 0.8);
-
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-
-                BrakeDrivetrain();
-
-                LeftGyroTurn(110, 0.8);
-            }
-        } else if (!detector.isFound()) {
-            //Left
-            LeftGyroTurn(73, 0.5);
+        if (mineral == 1) {
+            //Right
+            RightGyroTurn(-20, 0.4);
 
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
-            DriveForward(2250, 0.8);
+            DriveForward(2150, 0.65);
 
-            DriveBackwards(1800, 0.8);
+            DriveBackwards(1950, 0.65);
 
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
 
             BrakeDrivetrain();
 
-            GyroTurn(30, 0.8);
+            LeftGyroTurn(86, 0.6);
         }
+        else if (mineral == 2) {
+            //Center
+            LeftGyroTurn(44, 0.4);
 
-        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+
+            DriveForward(1900, 0.6);
+
+            DriveBackwards(1800, 0.6);
+
+            BrakeDrivetrain();
+
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+
+            LeftGyroTurn(86, 0.6);
+        } else if (mineral == 3) {
+            //Left
+            LeftGyroTurn(73, 0.5);
+
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+
+            DriveForward(2300, 0.6);
+
+            DriveBackwards(1900, 0.6);
+
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+
+            BrakeDrivetrain();
+
+            LeftGyroTurn(88, 0.6);
+        }
 
         DriveForward(1000,0.8);
 
+        DistanceSensorDriveForward(10);
+
+        LeftGyroTurn(140,0.5);
+
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        DistanceSensorDriveForward();
-
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        while (distanceSensorRight.getDistance(DistanceUnit.INCH) < 4){
-            rightDrive.setPower(0.45);
-            leftDrive.setPower(-0.45);
+        double distance = 30;
+        double lastdistance = 60;
+        while (distance < lastdistance){
+         distance  = rangeSensorBack.cmUltrasonic()/2.54;
+            rightDrive.setPower(0.35);
+            leftDrive.setPower(-0.35);
+            telemetry.addData("Ultrasonic CM reading", rangeSensorBack.cmUltrasonic()/2.54);
+            telemetry.update();
+            lastdistance  = rangeSensorBack.cmUltrasonic()/2.54;
         }
 
-        PIDWallFollower();
-
-        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        DriveBackwards(1600,0.9);
-
-        DropMarker();
-
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 5200);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 5700);
-        leftDrive.setPower(+0.47);
-        rightDrive.setPower(+0.5);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
-
-
-       // BackwardPIDWallFollower();
 
 
 
-//        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_BEATS_PER_MINUTE);
-         stop();
+//        BackwardPIDWallFollower();
+//
+//        DriveForward(600,0.9);
+//
+//        LowerIntake();
+//
+//        DropMarker();
+//
+//        PIDWallFollower();
+
+        stop();
     }
 
     public void TurnOnDogeCV() {
@@ -295,10 +312,10 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         vuforia.start();
     }
 
-    public void DistanceSensorDriveForward() {
+    public void DistanceSensorDriveForward(double inches) {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        while (distanceSensorRight.getDistance(DistanceUnit.INCH) > 3) {
+        while (distanceSensorRight.getDistance(DistanceUnit.INCH) > inches) {
             leftDrive.setPower(-0.6);
             rightDrive.setPower(-0.6);
         }
@@ -338,50 +355,9 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
     public void PIDWallFollower(){
-           double dist = 5;
-           double intergral = 0;
-           double error = 0;
-           double last_error = 0;
-           double derivative = 0;
-           double Kd = 0; //3rd
-           double Kp = 0.08; //start here Higher is sharper
-           double Ki = 0; //2nd
-           double finalKp;
-           double finalKi;
-           double finalKd;
-           double steering;
 
-          while (!frontbutton.isPressed()) {
-          blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
-           error = (dist - distanceSensorRight.getDistance(DistanceUnit.INCH));
-           intergral = intergral+error;
-           derivative = error - last_error;
-           finalKp = Kp * error;
-           finalKi =intergral*Ki;
-           finalKd  =derivative * Kd;
-           steering = finalKp+finalKi+finalKd;
-           
-           telemetry.addData("steering",steering);
-           telemetry.addData("distance",distanceSensorRight.getDistance(DistanceUnit.INCH));
-           telemetry.addData("Left power", leftDrive.getPower());
-           telemetry.addData("Right power", rightDrive.getPower());
-           telemetry.addData("error", error);
-              telemetry.update();
-               rightDrive.setPower(-0.5 + steering);
-               leftDrive.setPower(-0.5 - steering);
-               sleep(25);
-
-           last_error = error;
-
-       }
-        craterArmServo.setPosition(0);
-
-    }
-    public void BackwardPIDWallFollower(){
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
         double dist = 5;
         double intergral = 0;
         double error = 0;
@@ -395,9 +371,52 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         double finalKd;
         double steering;
 
-        while (distanceSensorLeft.getDistance(DistanceUnit.CM) > 10) {
+        while (distanceSensorRight.getDistance(DistanceUnit.CM) > 100) {
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
-            error = (dist - distanceSensorRight.getDistance(DistanceUnit.INCH));
+            error = (dist - rangeSensorBack.cmUltrasonic()/2.54);
+            intergral = intergral+error;
+            derivative = error - last_error;
+            finalKp = Kp * error;
+            finalKi =intergral*Ki;
+            finalKd  =derivative * Kd;
+            steering = finalKp+finalKi+finalKd;
+
+            telemetry.addData("steering",steering);
+            telemetry.addData("distance",distanceSensorRight.getDistance(DistanceUnit.INCH));
+            telemetry.addData("Left power", leftDrive.getPower());
+            telemetry.addData("Right power", rightDrive.getPower());
+            telemetry.addData("error", error);
+            telemetry.update();
+            rightDrive.setPower(-0.5 + steering);
+            leftDrive.setPower(-0.5 - steering);
+            sleep(25);
+
+            last_error = error;
+
+        }
+        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+    }
+    public void BackwardPIDWallFollower(){
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        double dist = 7;
+        double intergral = 0;
+        double error = 0;
+        double last_error = 0;
+        double derivative = 0;
+        double Kd = 0; //3rd
+        double Kp = 0.053; //start here Higher is sharper
+        double Ki = 0; //2nd
+        double finalKp;
+        double finalKi;
+        double finalKd;
+        double steering;
+
+        while (!backbutton.isPressed()) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
+            error = (dist - (rangeSensorBack.cmUltrasonic()/2.54));
             intergral = intergral+error;
             derivative = error - last_error;
             finalKp = Kp * error;
@@ -412,19 +431,15 @@ public class Crater_Autonomous_2 extends LinearOpMode {
             telemetry.addData("error", error);
             telemetry.update();
 
-            if (error < 0) { // if the robot is to close
-                rightDrive.setPower(-0.4 + steering);
-                leftDrive.setPower(-0.4 - steering);
-                sleep(25);
-            } else if (error > 0) {  // if the robot is to far
-                rightDrive.setPower(-0.4 + steering);
-                leftDrive.setPower(-0.4 - steering);
-                sleep(25);
-            }
 
-
+            rightDrive.setPower(0.5 - steering);
+            leftDrive.setPower(0.5 + steering);
+            sleep(25);
 
         }
+        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
     }
 
     //Standard Functions
@@ -437,9 +452,22 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
         //Let robot down
-        liftMotor.setTargetPosition(2900);
+        liftMotor.setTargetPosition(3700);
         liftMotor.setPower(1);
         while (liftMotor.isBusy()&& opModeIsActive()){}
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+
+        sleep(700);
+        if(detector.isFound()){
+            if (detector.getXPosition() < 250) {
+                mineral = 1;
+            }else if (detector.getXPosition() > 250){
+                mineral = 2;
+            }
+        }else {
+            mineral = 3;
+        }
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 400);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 400);
@@ -451,7 +479,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 300);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 300);
-        liftMotor.setTargetPosition(0);
+        liftMotor.setTargetPosition(-700);
         liftMotor.setPower(1);
         leftDrive.setPower(1);
         rightDrive.setPower(1);
@@ -486,13 +514,13 @@ public class Crater_Autonomous_2 extends LinearOpMode {
     public void DropMarker() {
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_BLUE);
 
-        intakeFold.setTargetPosition(intakeFold.getCurrentPosition() + 800);
-        intakeFold.setPower(0.5);
-        while (intakeFold.isBusy() && opModeIsActive()) {
-        }
-        sweeperMotor.setPower(-1);
-        sleep(700);
-        sweeperMotor.setPower(0);
+        leftLiftServo.setPosition(0.7);
+        rightLiftServo.setPosition(0.3);
+        sleep(1500);
+
+        leftLiftServo.setPosition(0);
+        rightLiftServo.setPosition(1);
+        sleep(500);
 
         ResetIntake();
     }
@@ -574,27 +602,6 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         }
         SetModeRUN_TO_POSITION();
 
-    }
-    public void driveAlongWall(double speed) {
-        while (distanceSensorLeft.getDistance(DistanceUnit.CM)> 65) {
-            leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-            double error = distanceSensorRight.getDistance(DistanceUnit.INCH) - 7;
-            if (error < TOLERANCE){//The robot is too close to the wall
-                leftDrive.setPower(GAIN - speed);
-                rightDrive.setPower(-GAIN - speed);
-            }
-            else if (error > TOLERANCE){//The robot is too far away
-                leftDrive.setPower(-GAIN - speed);
-                rightDrive.setPower(GAIN - speed);
-            } else {
-                leftDrive.setPower(-speed);
-                rightDrive.setPower(-speed);
-            }
-        }
-        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     //Gyro Methods
@@ -781,11 +788,24 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         intakeSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeFold.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
-     public void BrakeDrivetrain(){
-         leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-         rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-     }
-     void composeTelemetry() {
+    public void BrakeDrivetrain(){
+        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+    double getBatteryVoltage() {
+        double result = Double.POSITIVE_INFINITY;
+        for (VoltageSensor sensor : hardwareMap.voltageSensor) {
+            double voltage = sensor.getVoltage();
+            if (voltage > 0) {
+                result = Math.min(result, voltage);
+
+            }
+
+        }
+        return result;
+    }
+    void composeTelemetry() {
 
 
         // At the beginning of each telemetry update, grab a bunch of data

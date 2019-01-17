@@ -176,88 +176,88 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         waitForStart();
 
-        LowerIntake();
-
-        LowerFromLander();
-
-        ResetIntake();
-
-        SetModeRUN_TO_POSITION();
-
-        LeftGyroTurn(33, 0.5);
-
-        if (mineral == 1) {
-            //Right
-            RightGyroTurn(-20, 0.4);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-
-            DriveForward(2150, 0.65);
-
-            DriveBackwards(1950, 0.65);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-
-            BrakeDrivetrain();
-
-            LeftGyroTurn(86, 0.6);
-        }
-        else if (mineral == 2) {
-            //Center
-            LeftGyroTurn(44, 0.4);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-
-            DriveForward(1900, 0.6);
-
-            DriveBackwards(1800, 0.6);
-
-            BrakeDrivetrain();
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-
-            LeftGyroTurn(86, 0.6);
-        } else if (mineral == 3) {
-            //Left
-            LeftGyroTurn(73, 0.5);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-
-            DriveForward(2300, 0.6);
-
-            DriveBackwards(1900, 0.6);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-
-            BrakeDrivetrain();
-
-            LeftGyroTurn(94, 0.6);
-        }
-
-        DriveForward(1000,0.8);
-
-        DistanceSensorDriveForward(10);
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        while (rangeSensorBack.cmUltrasonic()/2.54 > 11){
-            rightDrive.setPower(0.35);
-            leftDrive.setPower(-0.35);
-            telemetry.addData("Ultrasonic CM reading", rangeSensorBack.cmUltrasonic()/2.54);
-            telemetry.update();
-        }
-
-
-
-
-//        BackwardPIDWallFollower();
-//
-//        DriveForward(600,0.9);
-//
 //        LowerIntake();
 //
-//        DropMarker();
+//        LowerFromLander();
 //
-//        PIDWallFollower();
+//        ResetIntake();
+//
+//        SetModeRUN_TO_POSITION();
+//
+//        LeftGyroTurn(33, 0.5);
+//
+//        if (mineral == 1) {
+//            //Right
+//            RightGyroTurn(-20, 0.4);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+//
+//            DriveForward(2150, 0.65);
+//
+//            DriveBackwards(1950, 0.65);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+//
+//            BrakeDrivetrain();
+//
+//            LeftGyroTurn(86, 0.6);
+//        }
+//        else if (mineral == 2) {
+//            //Center
+//            LeftGyroTurn(44, 0.4);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+//
+//            DriveForward(1900, 0.6);
+//
+//            DriveBackwards(1800, 0.6);
+//
+//            BrakeDrivetrain();
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+//
+//            LeftGyroTurn(86, 0.6);
+//        } else if (mineral == 3) {
+//            //Left
+//            LeftGyroTurn(73, 0.5);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+//
+//            DriveForward(2300, 0.6);
+//
+//            DriveBackwards(1900, 0.6);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+//
+//            BrakeDrivetrain();
+//
+//            LeftGyroTurn(94, 0.6);
+//        }
+//
+//        DriveForward(1000,0.8);
+//
+//        DistanceSensorDriveForward(10);
+//        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        while (rangeSensorBack.cmUltrasonic()/2.54 > 11){
+//            rightDrive.setPower(0.35);
+//            leftDrive.setPower(-0.35);
+//            telemetry.addData("Ultrasonic CM reading", rangeSensorBack.cmUltrasonic()/2.54);
+//            telemetry.update();
+//        }
+//
+//
+
+
+        BackwardPIDWallFollower();
+
+        DriveForward(600,0.9);
+
+        LowerIntake();
+
+        DropMarker();
+
+        PIDWallFollower();
 
         stop();
     }
@@ -380,14 +380,20 @@ public class Depot_Autonomous_2 extends LinearOpMode
             telemetry.addData("Right power", rightDrive.getPower());
             telemetry.addData("error", error);
             telemetry.update();
-            rightDrive.setPower(-0.5 + steering);
-            leftDrive.setPower(-0.5 - steering);
-            sleep(25);
 
+            if(error > last_error) {
+                rightDrive.setPower(-0.5 - steering);
+                leftDrive.setPower(-0.5 + steering);
+                sleep(25);
+            }
+            if (error < last_error) {
+                rightDrive.setPower(-0.5 + steering);
+                leftDrive.setPower(-0.5 - steering);
+                sleep(25);
+            }
             last_error = error;
 
         }
-        craterArmServo.setPosition(0);
         leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
@@ -395,15 +401,13 @@ public class Depot_Autonomous_2 extends LinearOpMode
     public void BackwardPIDWallFollower(){
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
-        double dist = 4;
+        double dist = 7;
         double intergral = 0;
         double error = 0;
         double last_error = 0;
         double derivative = 0;
         double Kd = 0; //3rd
-        double Kp = 0.05; //start here Higher is sharper
+        double Kp = 0.053; //start here Higher is sharper
         double Ki = 0; //2nd
         double finalKp;
         double finalKi;
@@ -412,7 +416,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         while (!backbutton.isPressed()) {
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
-            error = (dist - (rangeSensor.cmUltrasonic()/2.54));
+            error = (dist - (rangeSensorBack.cmUltrasonic()/2.54));
             intergral = intergral+error;
             derivative = error - last_error;
             finalKp = Kp * error;
@@ -427,18 +431,16 @@ public class Depot_Autonomous_2 extends LinearOpMode
             telemetry.addData("error", error);
             telemetry.update();
 
-            if (error < 0) { // if the robot is to close
-                rightDrive.setPower(-0.4 + steering);
-                leftDrive.setPower(-0.4 - steering);
-                sleep(25);
-            } else if (error > 0) {  // if the robot is to far
-                rightDrive.setPower(-0.4 + steering);
-                leftDrive.setPower(-0.4 - steering);
+            if(error > last_error) {
+                rightDrive.setPower(0.5 - steering);
+                leftDrive.setPower(0.5 + steering);
                 sleep(25);
             }
-
-
-
+            if(error < last_error) {
+                rightDrive.setPower(0.5 - steering);
+                leftDrive.setPower(0.5 + steering);
+                sleep(25);
+            }
         }
         leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -455,7 +457,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
         //Let robot down
-        liftMotor.setTargetPosition(2900);
+        liftMotor.setTargetPosition(3700);
         liftMotor.setPower(1);
         while (liftMotor.isBusy()&& opModeIsActive()){}
 
@@ -519,10 +521,11 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         leftLiftServo.setPosition(0.7);
         rightLiftServo.setPosition(0.3);
-        sleep(1900);
+        sleep(1500);
 
        leftLiftServo.setPosition(0);
        rightLiftServo.setPosition(1);
+       sleep(500);
 
         ResetIntake();
     }

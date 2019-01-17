@@ -171,8 +171,8 @@ public class TeleOp extends LinearOpMode {
 
                //Brings the lift up all the way
                if (gamepad2.y) {
-                   liftMotor.setTargetPosition(5500);
-                   liftMotor.setPower(0.8);
+                   liftMotor.setTargetPosition(7300);
+                   liftMotor.setPower(1);
                    blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
                    ledspam = false;
                }
@@ -185,8 +185,8 @@ public class TeleOp extends LinearOpMode {
 
                //brings lift up half-way
                if (gamepad2.x) {
-                   liftMotor.setTargetPosition(2900);
-                   liftMotor.setPower(0.6);
+                   liftMotor.setTargetPosition(3700);
+                   liftMotor.setPower(1);
                    ledspam = true;
 
                }
