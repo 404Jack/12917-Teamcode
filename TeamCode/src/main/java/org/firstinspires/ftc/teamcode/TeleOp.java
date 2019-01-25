@@ -187,6 +187,7 @@ public class TeleOp extends LinearOpMode {
                if (gamepad2.x) {
                    liftMotor.setTargetPosition(3700);
                    liftMotor.setPower(1);
+                   blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
                    ledspam = true;
 
                }
@@ -195,7 +196,7 @@ public class TeleOp extends LinearOpMode {
                if (gamepad2.a) {
                    liftMotor.setTargetPosition(0);
                    if (ledspam = true) {
-                       blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_BEATS_PER_MINUTE);
+                       blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
                    }
                }
                //Fail Safe

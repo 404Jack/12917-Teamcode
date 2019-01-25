@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Telemetry_TeleOp")
-
+@Disabled
 public class TelemetryTeleop extends LinearOpMode {
 
 

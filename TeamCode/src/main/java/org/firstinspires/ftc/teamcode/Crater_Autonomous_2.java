@@ -173,98 +173,104 @@ public class Crater_Autonomous_2 extends LinearOpMode
             telemetry.addData("CHANGE BATTERY NOW","Status, Put me up");
             telemetry.update();
         }
-
         waitForStart();
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        detector = new GoldAlignDetector();
+        sleep(3700);
 
-        LowerIntake();
-
-        LowerFromLander();
-
-        ResetIntake();
-
-        SetModeRUN_TO_POSITION();
-
-        LeftGyroTurn(33, 0.5);
-
-        if (mineral == 1) {
-            //Right
-            RightGyroTurn(-20, 0.4);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-
-            DriveForward(2150, 0.65);
-
-            DriveBackwards(1950, 0.65);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-
-            BrakeDrivetrain();
-
-            LeftGyroTurn(86, 0.6);
-        }
-        else if (mineral == 2) {
-            //Center
-            LeftGyroTurn(44, 0.4);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-
-            DriveForward(1900, 0.6);
-
-            DriveBackwards(1800, 0.6);
-
-            BrakeDrivetrain();
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-
-            LeftGyroTurn(86, 0.6);
-        } else if (mineral == 3) {
-            //Left
-            LeftGyroTurn(73, 0.5);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-
-            DriveForward(2300, 0.6);
-
-            DriveBackwards(1900, 0.6);
-
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-
-            BrakeDrivetrain();
-
-            LeftGyroTurn(88, 0.6);
-        }
-
-        DriveForward(1000,0.8);
-
-        DistanceSensorDriveForward(10);
-
-        LeftGyroTurn(140,0.5);
-
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        double distance = 30;
-        double lastdistance = 60;
-        while (distance < lastdistance){
-         distance  = rangeSensorBack.cmUltrasonic()/2.54;
-            rightDrive.setPower(0.35);
-            leftDrive.setPower(-0.35);
-            telemetry.addData("Ultrasonic CM reading", rangeSensorBack.cmUltrasonic()/2.54);
+        if(detector.isFound()){
+            if (detector.getXPosition() < 250) {
+               telemetry.addData("Right",detector.getXPosition());
+               telemetry.update();
+                mineral = 1;
+            }else if (detector.getXPosition() > 250){
+                telemetry.addData("Center",detector.getXPosition());
+                telemetry.update();
+                mineral = 2;
+            }
+        }else {
+            mineral = 3;
+            telemetry.addData("Left", detector.getXPosition());
             telemetry.update();
-            lastdistance  = rangeSensorBack.cmUltrasonic()/2.54;
         }
 
-
-
-
-//        BackwardPIDWallFollower();
-//
-//        DriveForward(600,0.9);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
 //
 //        LowerIntake();
 //
+//        LowerFromLander();
+//
+//        ResetIntake();
+//
+//        SetModeRUN_TO_POSITION();
+//
+//        LeftGyroTurn(33, 0.4);
+//
+//        if (mineral == 1) {
+//            //Right
+//            RightGyroTurn(-20, 0.4);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+//
+//            DriveForward(2150, 0.65);
+//
+//            DriveBackwards(1950, 0.65);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+//
+//            BrakeDrivetrain();
+//
+//            LeftGyroTurn(86, 0.6);
+//        }
+//        else if (mineral == 2) {
+//            //Center
+//            LeftGyroTurn(44, 0.4);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+//
+//            DriveForward(1900, 0.6);
+//
+//            DriveBackwards(1800, 0.6);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+//
+//            BrakeDrivetrain();
+//
+//
+//            LeftGyroTurn(86, 0.6);
+//
+//        } else if (mineral == 3) {
+//            //Left
+//            LeftGyroTurn(73, 0.4);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+//
+//            DriveForward(2300, 0.6);
+//
+//            DriveBackwards(1900, 0.6);
+//
+//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+//
+//            BrakeDrivetrain();
+//
+//            LeftGyroTurn(88, 0.6);
+//        }
+//
+//        DriveForward(1000,0.8);
+//
+//        DistanceSensorDriveForward(7);
+//
+//        LeftGyroTurn(140,0.4);
+//
+//        LeftGyroTurn(172,0.33);
+//
+//        DriveForwardSkew(4900,0.67,5000, 0.7);
+//
 //        DropMarker();
 //
-//        PIDWallFollower();
+//        LeftGyroTurn(177,0.3);
+//
+//        DriveBackwardSkew(-5950,-0.63,-6050, -0.65);
 
         stop();
     }
@@ -315,9 +321,21 @@ public class Crater_Autonomous_2 extends LinearOpMode
     public void DistanceSensorDriveForward(double inches) {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        while (distanceSensorRight.getDistance(DistanceUnit.INCH) > inches) {
+        while ((rangeSensor.cmUltrasonic()/2.54)  > inches) {
             leftDrive.setPower(-0.6);
             rightDrive.setPower(-0.6);
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+    public void DistanceSensorDrivskew(double inches) {
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        while ((rangeSensor.cmUltrasonic()/2.54) -8 > inches) {
+            leftDrive.setPower(-0.6);
+            rightDrive.setPower(-0.57);
         }
         leftDrive.setPower(0);
         rightDrive.setPower(0);
@@ -329,6 +347,23 @@ public class Crater_Autonomous_2 extends LinearOpMode
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+    }
+    public void DriveForwardSkew(int leftDistance , double leftSpeed , int rightDistance , double rightSpeed){
+       while (rangeSensor.cmUltrasonic()/2.54 > 20) {
+           leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
+           rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
+           leftDrive.setPower(leftSpeed);
+           rightDrive.setPower(rightSpeed);
+           while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) { }
+       }
+    }
+    public void DriveBackwardSkew(int leftDistance , double leftSpeed , int rightDistance , double rightSpeed){
+
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
+        leftDrive.setPower(leftSpeed);
+        rightDrive.setPower(rightSpeed);
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
     public void DriveBackwards(int distance, double speed){
@@ -444,10 +479,11 @@ public class Crater_Autonomous_2 extends LinearOpMode
 
     //Standard Functions
     public void LowerFromLander(){
+
         lynchpin.setPower(1);
         liftMotor.setPower(-0.8);
         lynchpin.setTargetPosition(525);
-        //liftMotor.setTargetPosition(25);
+        liftMotor.setTargetPosition(-100);
         while (lynchpin.isBusy()&& opModeIsActive()){}
 
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
@@ -457,17 +493,6 @@ public class Crater_Autonomous_2 extends LinearOpMode
         while (liftMotor.isBusy()&& opModeIsActive()){}
 
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
-
-        sleep(700);
-        if(detector.isFound()){
-            if (detector.getXPosition() < 250) {
-                mineral = 1;
-            }else if (detector.getXPosition() > 250){
-                mineral = 2;
-            }
-        }else {
-            mineral = 3;
-        }
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 400);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 400);
@@ -512,17 +537,17 @@ public class Crater_Autonomous_2 extends LinearOpMode
         while (liftMotor.isBusy() && opModeIsActive()){}
     }
     public void DropMarker() {
-        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_BLUE);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
-        leftLiftServo.setPosition(0.7);
-        rightLiftServo.setPosition(0.3);
-        sleep(1500);
+       intakeFold.setTargetPosition(800);
+       while (intakeFold.isBusy()& opModeIsActive()){}
 
-        leftLiftServo.setPosition(0);
-        rightLiftServo.setPosition(1);
-        sleep(500);
+        sweeperMotor.setPower(-1);
+        sleep(400);
 
         ResetIntake();
+        sweeperMotor.setPower(0);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
     }
     public void ResetIntake() {
         intakeFold.setTargetPosition(0);

@@ -175,7 +175,19 @@ public class Depot_Autonomous_2 extends LinearOpMode
         }
 
         waitForStart();
+        vuforia.setDogeCVDetector(detector);
+        sleep(400);
 
+//        if(detector.isFound()){
+//            if (detector.getXPosition() < 250) {
+//                mineral = 1;
+//            }else if (detector.getXPosition() > 250){
+//                mineral = 2;
+//            }
+//        }else {
+//            mineral = 3;
+//        }
+//
 //        LowerIntake();
 //
 //        LowerFromLander();
@@ -200,7 +212,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
 //
 //            BrakeDrivetrain();
 //
-//            LeftGyroTurn(86, 0.6);
+//            LeftGyroTurn(86, 0.4);
 //        }
 //        else if (mineral == 2) {
 //            //Center
@@ -231,40 +243,26 @@ public class Depot_Autonomous_2 extends LinearOpMode
 //
 //            BrakeDrivetrain();
 //
-//            LeftGyroTurn(89, 0.6);
+//            LeftGyroTurn(89, 0.5);
 //        }
 //
 //        DriveForward(1000,0.8);
 //
-//       LeftGyroTurn(140,0.5);
+//        DistanceSensorDriveForward(6.5);
 //
-//        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        double distance = 30;
-//        double lastdistance = 60;
-//        while (distance < lastdistance){
-//         distance  = rangeSensorBack.cmUltrasonic()/2.54;
-//            rightDrive.setPower(0.35);
-//            leftDrive.setPower(-0.35);
-//            telemetry.addData("Ultrasonic CM reading", rangeSensorBack.cmUltrasonic()/2.54);
-//            telemetry.update();
-//            lastdistance  = rangeSensorBack.cmUltrasonic()/2.54;
-//        }
+//       LeftGyroTurn(140,0.45);
 //
-//
+//       LeftGyroTurn(177,0.35);
 
+       DriveForwardSkew(-3100,-0.5,-2800,-0.47);
 
-        BackwardPIDWallFollower();
+       LowerIntake();
 
-        DriveForward(600,0.9);
+       DropMarker();
 
-        LowerIntake();
+       DriveForwardSkew(7000,0.5,6500,0.47);
 
-        DropMarker();
-
-        PIDWallFollower();
-
-        stop();
+       stop();
     }
 
     public void TurnOnDogeCV() {
@@ -310,6 +308,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
         vuforia.start();
     }
 
+
     public void DistanceSensorDriveForward(double inches) {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -334,6 +333,13 @@ public class Depot_Autonomous_2 extends LinearOpMode
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+    }
+    public void DriveForwardSkew(int leftDistance , double leftSpeed , int rightDistance , double rightSpeed){
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
+        leftDrive.setPower(leftSpeed);
+        rightDrive.setPower(rightSpeed);
         while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
     }
     public void LeftTurn(int distance,double speed){
@@ -457,7 +463,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
         lynchpin.setPower(1);
         liftMotor.setPower(-0.8);
         lynchpin.setTargetPosition(525);
-        //liftMotor.setTargetPosition(25);
+        liftMotor.setTargetPosition(-100);
         while (lynchpin.isBusy()&& opModeIsActive()){}
 
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
@@ -465,19 +471,6 @@ public class Depot_Autonomous_2 extends LinearOpMode
         liftMotor.setTargetPosition(3700);
         liftMotor.setPower(1);
         while (liftMotor.isBusy()&& opModeIsActive()){}
-
-        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
-
-        sleep(700);
-        if(detector.isFound()){
-           if (detector.getXPosition() < 250) {
-               mineral = 1;
-           }else if (detector.getXPosition() > 250){
-               mineral = 2;
-           }
-        }else {
-            mineral = 3;
-        }
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 400);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 400);
