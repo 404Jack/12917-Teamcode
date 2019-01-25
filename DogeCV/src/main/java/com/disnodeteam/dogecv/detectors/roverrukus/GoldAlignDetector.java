@@ -34,11 +34,11 @@ public class GoldAlignDetector extends DogeCVDetector {
     private Mat hierarchy  = new Mat(); // hierarchy used by coutnours
 
     // Results of the detector
-    private boolean found    = false; // Is the gold mineral found
+    public boolean found    = false; // Is the gold mineral found
     private boolean aligned  = false; // Is the gold mineral aligned
     private double  goldXPos = 0;     // X Position (in pixels) of the gold element
 
-    // Detector settings
+    // Detector settingse
     public boolean debugAlignment = true; // Show debug lines to show alignment settings
     public double alignPosOffset  = 0;    // How far from center frame is aligned
     public double alignSize       = 100;  // How wide is the margin of error for alignment
