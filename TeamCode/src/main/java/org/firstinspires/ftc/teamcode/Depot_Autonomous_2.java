@@ -103,167 +103,152 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
     @Override
     public void runOpMode() throws InterruptedException {
-        TurnOnDogeCV();
 
-        leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
-        rightDrive = hardwareMap.get(DcMotor.class, "rightDrive");
-        liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
-        intakeSlideMotor = hardwareMap.get(DcMotor.class, "intakeSlideMotor");
-        sweeperMotor = hardwareMap.get(DcMotor.class, "sweeperMotor");
-        intakeFold = hardwareMap.get(DcMotor.class, "intakeFold");
-        lynchpin = hardwareMap.get(DcMotor.class, "lynchpin");
-        leftLiftServo = hardwareMap.get(Servo.class, "leftLiftServo");
-        rightLiftServo = hardwareMap.get(Servo.class, "rightLiftServo");
-        distanceSensorLeft = hardwareMap.get(DistanceSensor.class, "distSensorLeft");
-        distanceSensorRight = hardwareMap.get(DistanceSensor.class, "distSensorRight");
-        craterArmServo = hardwareMap.get(Servo.class, "craterArmServo");
-        blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
-        frontbutton = hardwareMap.get(TouchSensor.class,"frontbutton");
-        backbutton = hardwareMap.get(TouchSensor.class,"backbutton");
-        rangeSensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"rangeSensor");
-        rangeSensorBack = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "rangeSensorBack");
+    TurnOnDogeCV();
+
+    leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
+    rightDrive = hardwareMap.get(DcMotor.class, "rightDrive");
+    liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
+    intakeSlideMotor = hardwareMap.get(DcMotor.class, "intakeSlideMotor");
+    sweeperMotor = hardwareMap.get(DcMotor.class, "sweeperMotor");
+    intakeFold = hardwareMap.get(DcMotor.class, "intakeFold");
+    lynchpin = hardwareMap.get(DcMotor.class, "lynchpin");
+    leftLiftServo = hardwareMap.get(Servo.class, "leftLiftServo");
+    rightLiftServo = hardwareMap.get(Servo.class, "rightLiftServo");
+    distanceSensorLeft = hardwareMap.get(DistanceSensor.class, "distSensorLeft");
+    distanceSensorRight = hardwareMap.get(DistanceSensor.class, "distSensorRight");
+    craterArmServo = hardwareMap.get(Servo.class, "craterArmServo");
+    blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+    frontbutton = hardwareMap.get(TouchSensor.class, "frontbutton");
+    backbutton = hardwareMap.get(TouchSensor.class, "backbutton");
+    rangeSensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "rangeSensor");
+    rangeSensorBack = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "rangeSensorBack");
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         liftMotor.setDirection(DcMotor.Direction.REVERSE);
 
+    //Set all motors to run to position and reset encoders
+    SetModeRUN_TO_POSITION();
 
-        //Set all motors to run to position and reset encoders
-        SetModeRUN_TO_POSITION();
+    SetZeroPowerBrake();
 
-        SetZeroPowerBrake();
+    // Save the calibration data to a file. You can choose whatever file
+    // name you wish here, but you'll want to indicate the same file name
+    // when you initialize the IMU in an opmode in which it is used. If you
+    // have more than one IMU on your robot, you'll of course want to use
+    // different configuration file names for each.
+    BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+    parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+    parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+    parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+    parameters.loggingEnabled = true;
+    parameters.loggingTag = "IMU";
+    parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
-        // Save the calibration data to a file. You can choose whatever file
-        // name you wish here, but you'll want to indicate the same file name
-        // when you initialize the IMU in an opmode in which it is used. If you
-        // have more than one IMU on your robot, you'll of course want to use
-        // different configuration file names for each.
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled = true;
-        parameters.loggingTag = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-
-        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
-        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
-        // and named "imu".
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
+    // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+    // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+    // and named "imu".
+    imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
 
-        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+    angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
-
-        //Get calibration data
+    //Get calibration data
         while (!isStopRequested() && !imu.isGyroCalibrated()) {
-            sleep(50);
-            idle();
-        }
+    sleep(50);
+    idle();
+}
 
-        telemetry.addData("Status", "Put me up");
-        telemetry.update();
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
 
-        if (getBatteryVoltage() < 13.1) {
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
-            telemetry.addData("Status, Put me up", "CHANGE BATTERY SOON");
-            telemetry.update();
-        }
-        if (getBatteryVoltage() < 12.9) {
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
-            telemetry.addData("CHANGE BATTERY NOW","Status, Put me up");
-            telemetry.update();
-        }
+        telemetry.addData("Ready to run","");
+        telemetry.update();
 
-        waitForStart();
+    waitForStart();
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+
+    LowerIntake();
+
         vuforia.setDogeCVDetector(detector);
-        sleep(400);
+        vuforia.enableDogeCV();
+        vuforia.showDebug();
+        vuforia.start();
 
-//        if(detector.isFound()){
-//            if (detector.getXPosition() < 250) {
-//                mineral = 1;
-//            }else if (detector.getXPosition() > 250){
-//                mineral = 2;
-//            }
-//        }else {
-//            mineral = 3;
-//        }
-//
-//        LowerIntake();
-//
-//        LowerFromLander();
-//
-//        ResetIntake();
-//
-//        SetModeRUN_TO_POSITION();
-//
-//        LeftGyroTurn(33, 0.5);
-//
-//        if (mineral == 1) {
-//            //Right
-//            RightGyroTurn(-20, 0.4);
-//
-//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-//
-//            DriveForward(2150, 0.65);
-//
-//            DriveBackwards(1950, 0.65);
-//
-//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-//
-//            BrakeDrivetrain();
-//
-//            LeftGyroTurn(86, 0.4);
-//        }
-//        else if (mineral == 2) {
-//            //Center
-//            LeftGyroTurn(44, 0.4);
-//
-//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-//
-//            DriveForward(1900, 0.6);
-//
-//            DriveBackwards(1800, 0.6);
-//
-//            BrakeDrivetrain();
-//
-//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-//
-//            LeftGyroTurn(86, 0.6);
-//        } else if (mineral == 3) {
-//            //Left
-//            LeftGyroTurn(73, 0.5);
-//
-//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
-//
-//            DriveForward(2300, 0.6);
-//
-//            DriveBackwards(1900, 0.6);
-//
-//            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
-//
-//            BrakeDrivetrain();
-//
-//            LeftGyroTurn(89, 0.5);
-//        }
-//
-//        DriveForward(1000,0.8);
-//
-//        DistanceSensorDriveForward(6.5);
-//
-//       LeftGyroTurn(140,0.45);
-//
-//       LeftGyroTurn(177,0.35);
+    LowerFromLander();
 
-       DriveForwardSkew(-3100,-0.5,-2800,-0.47);
+    ResetIntake();
 
-       LowerIntake();
+    SetModeRUN_TO_POSITION();
 
-       DropMarker();
+    LeftGyroTurn(33, 0.4);
 
-       DriveForwardSkew(7000,0.5,6500,0.47);
+        if (mineral == 1) {
+    //Right
+    RightGyroTurn(-20, 0.4);
 
-       stop();
-    }
+    blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+
+    DriveForward(2150, 0.65);
+
+    DriveBackwards(1950, 0.65);
+
+    blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+
+    BrakeDrivetrain();
+
+    LeftGyroTurn(86, 0.6);
+}
+        else if (mineral == 2) {
+    //Center
+    LeftGyroTurn(44, 0.4);
+
+    blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+
+    DriveForward(1900, 0.6);
+
+    DriveBackwards(1800, 0.6);
+
+    blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+
+    BrakeDrivetrain();
+
+    LeftGyroTurn(86, 0.6);
+
+} else if (mineral == 3) {
+    //Left
+    LeftGyroTurn(73, 0.4);
+
+    blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
+
+    DriveForward(2300, 0.6);
+
+    DriveBackwards(1900, 0.6);
+
+    blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+
+    BrakeDrivetrain();
+
+    LeftGyroTurn(88, 0.6);
+}
+
+    DriveForward(1000,0.8);
+
+    DistanceSensorDriveForward(7);
+
+    LeftGyroTurn(140,0.4);
+
+    LeftGyroTurn(173.6,0.33);
+
+    DriveForwardSkew(4920,0.68,5000, 0.7);
+
+    DropMarker();
+
+    LeftGyroTurn(177,0.3);
+
+    DriveBackwardSkew(-5950,-0.63,-6050, -0.65);
+
+    stop();
+}
 
     public void TurnOnDogeCV() {
         webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -302,17 +287,121 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         // detector.enable(); // Start the detector!
 
-        vuforia.setDogeCVDetector(detector);
-        vuforia.enableDogeCV();
-        vuforia.showDebug();
-        vuforia.start();
     }
+    public void dogeReInit(){
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_BLUE);
+        sleep(2950);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_BLUE);
+        sleep(2950);
+//9 SECONDS
 
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+        sleep(1933);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+        sleep(1933);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+        sleep(1933);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+        sleep(1933);
+//8/17 SECONDS
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_VIOLET);
+        sleep(1100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_VIOLET);
+        sleep(1100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_VIOLET);
+        sleep(1100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_VIOLET);
+        sleep(1100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_VIOLET);
+        sleep(1100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_VIOLET);
+        sleep(1100);
+//7/24 SECONDS
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+        sleep(600);
+//8/32 Seconds
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(100);blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
+        sleep(300);
+//6/38 Seconds
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_RED);
+        sleep(5000);
+//5/43 Seconds
+
+        vuforia.disableDogeCV();
+        vuforia.stop();
+        sleep(1000);
+        TurnOnDogeCV();
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
+    }
 
     public void DistanceSensorDriveForward(double inches) {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        while (distanceSensorRight.getDistance(DistanceUnit.INCH) > inches) {
+        while ((rangeSensor.cmUltrasonic() / 2.54) > inches) {
             leftDrive.setPower(-0.6);
             rightDrive.setPower(-0.6);
         }
@@ -321,44 +410,72 @@ public class Depot_Autonomous_2 extends LinearOpMode
         leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
-    public void DriveForward(int distance , double speed){
+    public void DistanceSensorDrivskew(double inches) {
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        while ((rangeSensor.cmUltrasonic() / 2.54) - 8 > inches) {
+            leftDrive.setPower(-0.6);
+            rightDrive.setPower(-0.57);
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+        leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+    public void DriveForward(int distance, double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
+        }
     }
-    public void DriveBackwards(int distance, double speed){
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + distance);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + distance);
-        leftDrive.setPower(speed);
-        rightDrive.setPower(speed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+    public void DriveForwardSkew(int leftDistance, double leftSpeed, int rightDistance, double rightSpeed) {
+        while (rangeSensor.cmUltrasonic() / 2.54 > 20) {
+            leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
+            rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
+            leftDrive.setPower(leftSpeed);
+            rightDrive.setPower(rightSpeed);
+            while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
+            }
+        }
     }
-    public void DriveForwardSkew(int leftDistance , double leftSpeed , int rightDistance , double rightSpeed){
+    public void DriveBackwardSkew(int leftDistance, double leftSpeed, int rightDistance, double rightSpeed) {
+
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
         leftDrive.setPower(leftSpeed);
         rightDrive.setPower(rightSpeed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
+        }
     }
-    public void LeftTurn(int distance,double speed){
+    public void DriveBackwards(int distance, double speed) {
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + distance);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + distance);
+        leftDrive.setPower(speed);
+        rightDrive.setPower(speed);
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
+        }
+    }
+    public void LeftTurn(int distance, double speed) {
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
+        }
     }
-    public void RightTurn(int distance , double speed){
+    public void RightTurn(int distance, double speed) {
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
+        }
     }
-    public void PIDWallFollower(){
+    public void PIDWallFollower() {
 
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -377,31 +494,24 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         while (distanceSensorRight.getDistance(DistanceUnit.CM) > 100) {
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
-            error = (dist - rangeSensorBack.cmUltrasonic()/2.54);
-            intergral = intergral+error;
+            error = (dist - rangeSensorBack.cmUltrasonic() / 2.54);
+            intergral = intergral + error;
             derivative = error - last_error;
             finalKp = Kp * error;
-            finalKi =intergral*Ki;
-            finalKd  =derivative * Kd;
-            steering = finalKp+finalKi+finalKd;
+            finalKi = intergral * Ki;
+            finalKd = derivative * Kd;
+            steering = finalKp + finalKi + finalKd;
 
-            telemetry.addData("steering",steering);
-            telemetry.addData("distance",distanceSensorRight.getDistance(DistanceUnit.INCH));
+            telemetry.addData("steering", steering);
+            telemetry.addData("distance", distanceSensorRight.getDistance(DistanceUnit.INCH));
             telemetry.addData("Left power", leftDrive.getPower());
             telemetry.addData("Right power", rightDrive.getPower());
             telemetry.addData("error", error);
             telemetry.update();
+            rightDrive.setPower(-0.5 + steering);
+            leftDrive.setPower(-0.5 - steering);
+            sleep(25);
 
-            if(error > last_error) {
-                rightDrive.setPower(-0.5 - steering);
-                leftDrive.setPower(-0.5 + steering);
-                sleep(25);
-            }
-            if (error < last_error) {
-                rightDrive.setPower(-0.5 + steering);
-                leftDrive.setPower(-0.5 - steering);
-                sleep(25);
-            }
             last_error = error;
 
         }
@@ -409,7 +519,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
         rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
     }
-    public void BackwardPIDWallFollower(){
+    public void BackwardPIDWallFollower() {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         double dist = 7;
@@ -427,31 +537,26 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         while (!backbutton.isPressed()) {
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BEATS_PER_MINUTE_RAINBOW_PALETTE);
-            error = (dist - (rangeSensorBack.cmUltrasonic()/2.54));
-            intergral = intergral+error;
+            error = (dist - (rangeSensorBack.cmUltrasonic() / 2.54));
+            intergral = intergral + error;
             derivative = error - last_error;
             finalKp = Kp * error;
-            finalKi =intergral*Ki;
-            finalKd  =derivative * Kd;
-            steering = finalKp+finalKi+finalKd;
+            finalKi = intergral * Ki;
+            finalKd = derivative * Kd;
+            steering = finalKp + finalKi + finalKd;
 
-            telemetry.addData("steering",steering);
-            telemetry.addData("distance",distanceSensorRight.getDistance(DistanceUnit.INCH));
+            telemetry.addData("steering", steering);
+            telemetry.addData("distance", distanceSensorRight.getDistance(DistanceUnit.INCH));
             telemetry.addData("Left power", leftDrive.getPower());
             telemetry.addData("Right power", rightDrive.getPower());
             telemetry.addData("error", error);
             telemetry.update();
 
-            if(error > last_error) {
-                rightDrive.setPower(0.5 - steering);
-                leftDrive.setPower(0.5 + steering);
-                sleep(25);
-            }
-            if(error < last_error) {
-                rightDrive.setPower(0.5 - steering);
-                leftDrive.setPower(0.5 + steering);
-                sleep(25);
-            }
+
+            rightDrive.setPower(0.5 - steering);
+            leftDrive.setPower(0.5 + steering);
+            sleep(25);
+
         }
         leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -459,34 +564,58 @@ public class Depot_Autonomous_2 extends LinearOpMode
     }
 
     //Standard Functions
-    public void LowerFromLander(){
+    public void LowerFromLander() {
+
         lynchpin.setPower(1);
         liftMotor.setPower(-0.8);
         lynchpin.setTargetPosition(525);
         liftMotor.setTargetPosition(-100);
-        while (lynchpin.isBusy()&& opModeIsActive()){}
+        while (lynchpin.isBusy() && opModeIsActive()) {
+        }
 
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
         //Let robot down
         liftMotor.setTargetPosition(3700);
         liftMotor.setPower(1);
-        while (liftMotor.isBusy()&& opModeIsActive()){}
+        while (liftMotor.isBusy() && opModeIsActive()) {
+        }
+
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+
+        sleep(700);
+        if (detector.isFound()) {
+            if (detector.getXPosition() < 250) {
+                telemetry.addData("Right", detector.getXPosition());
+                telemetry.update();
+                mineral = 1;
+            } else if (detector.getXPosition() > 250) {
+                telemetry.addData("Center", detector.getXPosition());
+                telemetry.update();
+                mineral = 2;
+            }
+        } else {
+            mineral = 3;
+            telemetry.addData("Left", detector.getXPosition());
+            telemetry.update();
+        }
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 400);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 400);
         leftDrive.setPower(1);
         rightDrive.setPower(1);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
+        }
 
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 300);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 300);
-        liftMotor.setTargetPosition(0);
+        liftMotor.setTargetPosition(-700);
         liftMotor.setPower(1);
         leftDrive.setPower(1);
         rightDrive.setPower(1);
-        while (liftMotor.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {}
+        while (liftMotor.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
+        }
         sleep(400);
     }
     public void LowerIntake() {
@@ -500,32 +629,34 @@ public class Depot_Autonomous_2 extends LinearOpMode
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() &opModeIsActive());
+        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) ;
 
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + distance);
         ResetIntake();
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (intakeFold.isBusy()& leftDrive.isBusy() & rightDrive.isBusy() &opModeIsActive());
+        while (intakeFold.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) ;
     }
-    public void ResetLift(){
+    public void ResetLift() {
         liftMotor.setTargetPosition(0);
         liftMotor.setPower(0.9);
-        while (liftMotor.isBusy() && opModeIsActive()){}
+        while (liftMotor.isBusy() && opModeIsActive()) {
+        }
     }
     public void DropMarker() {
-        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_BLUE);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
-        leftLiftServo.setPosition(0.7);
-        rightLiftServo.setPosition(0.3);
-        sleep(1500);
+        intakeFold.setTargetPosition(500);
+        while (intakeFold.isBusy() & opModeIsActive()) {
+        }
 
-       leftLiftServo.setPosition(0);
-       rightLiftServo.setPosition(1);
-       sleep(500);
+        sweeperMotor.setPower(-1);
+        sleep(400);
 
         ResetIntake();
+        sweeperMotor.setPower(0);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
     }
     public void ResetIntake() {
         intakeFold.setTargetPosition(0);
@@ -533,7 +664,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
         while (intakeFold.isBusy() && opModeIsActive()) {
         }
     }
-    public void IntakeResetForwardDrive(int distance , double speed) {
+    public void IntakeResetForwardDrive(int distance, double speed) {
         intakeFold.setTargetPosition(0);
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - distance);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - distance);
@@ -543,7 +674,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
         while (intakeFold.isBusy() & leftDrive.isBusy() & rightDrive.isBusy() && opModeIsActive()) {
         }
     }
-    public void GoldAlign(){
+    public void GoldAlign() {
         boolean aligned = false;
 
         while (!detector.isFound()) {
@@ -576,7 +707,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
     }
     public void DriveToDepot(double speed) {
         SetModePowerDrive();
-        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 31){
+        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 31) {
 
             while (distanceSensorRight.getDistance(DistanceUnit.INCH) > 5) {
                 leftDrive.setPower(-speed);
@@ -592,7 +723,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
     }
     public void DriveToCrater(double speed) {
         SetModePowerDrive();
-        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 34){
+        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 34) {
 
             if (distanceSensorRight.getDistance(DistanceUnit.INCH) > 5) {
                 leftDrive.setPower(speed);
@@ -618,20 +749,16 @@ public class Depot_Autonomous_2 extends LinearOpMode
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         double currentHeading = AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle);
         double delta = currentHeading - sensorHeading;
-        if(delta < -180)
-        {
+        if (delta < -180) {
             delta += 360;
-        }
-        else if(delta >= 180)
-        {
-            delta -=360;
+        } else if (delta >= 180) {
+            delta -= 360;
         }
         heading += delta;
         sensorHeading = currentHeading;
         return heading;
     }
-
-    public void GyroTurn( double degrees, double speed) {
+    public void GyroTurn(double degrees, double speed) {
         resetGyro();
 
         boolean Left = degrees > 0;
@@ -642,25 +769,23 @@ public class Depot_Autonomous_2 extends LinearOpMode
         telemetry.addData("heading", heading);
         telemetry.update();
         sleep(1000);
-        if (Left){
+        if (Left) {
             LeftSpeed = LeftSpeed * -1;
-        }
-        else {
+        } else {
             RightSpeed = RightSpeed * -1;
         }
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftDrive.setPower(LeftSpeed);
         rightDrive.setPower(RightSpeed);
-        while (Math.abs(getHeading())< Math.abs(degrees) - 6 && opModeIsActive()) {
+        while (Math.abs(getHeading()) < Math.abs(degrees) - 6 && opModeIsActive()) {
 
-            if (Math.abs(degrees)-Math.abs(getHeading()) < 30){
+            if (Math.abs(degrees) - Math.abs(getHeading()) < 30) {
                 if (Left) {
                     leftDrive.setPower(-0.35);
                     rightDrive.setPower(0.35);
 
-                }
-                else {
+                } else {
                     leftDrive.setPower(0.35);
                     rightDrive.setPower(-0.35);
                 }
@@ -674,12 +799,12 @@ public class Depot_Autonomous_2 extends LinearOpMode
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
-    public void RightGyroTurn(double degrees , double speed) {
+    public void RightGyroTurn(double degrees, double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 8000);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 8000);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > -degrees+5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > -degrees + 5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
@@ -695,12 +820,12 @@ public class Depot_Autonomous_2 extends LinearOpMode
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
-    public void NegativeRightGyroTurn(double degrees , double speed) {
+    public void NegativeRightGyroTurn(double degrees, double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 8000);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 8000);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) < -degrees+5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) < -degrees + 5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
@@ -716,12 +841,12 @@ public class Depot_Autonomous_2 extends LinearOpMode
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
-    public void LeftGyroTurn(double degrees , double speed) {
+    public void LeftGyroTurn(double degrees, double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 8000);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 8000);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) < degrees-5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) < degrees - 5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
@@ -737,12 +862,12 @@ public class Depot_Autonomous_2 extends LinearOpMode
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
-    public void NegativeLeftGyroTurn(double degrees , double speed) {
+    public void NegativeLeftGyroTurn(double degrees, double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - 8000);
         rightDrive.setTargetPosition(rightDrive.getCurrentPosition() + 8000);
         leftDrive.setPower(speed);
         rightDrive.setPower(speed);
-        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > degrees-5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > degrees - 5 && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
@@ -766,7 +891,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
     }
 
     //Mode set Protocols
-    public void SetModeRUN_TO_POSITION(){
+    public void SetModeRUN_TO_POSITION() {
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intakeSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -785,17 +910,15 @@ public class Depot_Autonomous_2 extends LinearOpMode
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
-
-    public void SetZeroPowerBrake(){
+    public void SetZeroPowerBrake() {
         liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeFold.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
-    public void BrakeDrivetrain(){
+    public void BrakeDrivetrain() {
         leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
-
     double getBatteryVoltage() {
         double result = Double.POSITIVE_INFINITY;
         for (VoltageSensor sensor : hardwareMap.voltageSensor) {
@@ -813,60 +936,98 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         // At the beginning of each telemetry update, grab a bunch of data
         // from the IMU that we will then display in separate lines.
-        telemetry.addAction(new Runnable() { @Override public void run()
-        {
-            // Acquiring the angles is relatively expensive; we don't want
-            // to do that in each of the three items that need that info, as that's
-            // three times the necessary expense.
-            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            gravity  = imu.getGravity();
-        }
+        telemetry.addAction(new Runnable() {
+            @Override
+            public void run() {
+                // Acquiring the angles is relatively expensive; we don't want
+                // to do that in each of the three items that need that info, as that's
+                // three times the necessary expense.
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                gravity = imu.getGravity();
+            }
         });
 
         telemetry.addLine()
                 .addData("status", new Func<String>() {
-                    @Override public String value() {
+                    @Override
+                    public String value() {
                         return imu.getSystemStatus().toShortString();
                     }
                 })
                 .addData("calib", new Func<String>() {
-                    @Override public String value() {
+                    @Override
+                    public String value() {
                         return imu.getCalibrationStatus().toString();
                     }
                 });
 
         telemetry.addLine()
                 .addData("heading", new Func<String>() {
-                    @Override public String value() {
+                    @Override
+                    public String value() {
                         return formatAngle(angles.angleUnit, angles.firstAngle);
                     }
                 })
                 .addData("roll", new Func<String>() {
-                    @Override public String value() {
+                    @Override
+                    public String value() {
                         return formatAngle(angles.angleUnit, angles.secondAngle);
                     }
                 })
                 .addData("pitch", new Func<String>() {
-                    @Override public String value() {
+                    @Override
+                    public String value() {
                         return formatAngle(angles.angleUnit, angles.thirdAngle);
                     }
                 });
 
         telemetry.addLine()
                 .addData("grvty", new Func<String>() {
-                    @Override public String value() {
+                    @Override
+                    public String value() {
                         return gravity.toString();
                     }
                 })
                 .addData("mag", new Func<String>() {
-                    @Override public String value() {
+                    @Override
+                    public String value() {
                         return String.format(Locale.getDefault(), "%.3f",
-                                Math.sqrt(gravity.xAccel*gravity.xAccel
-                                        + gravity.yAccel*gravity.yAccel
-                                        + gravity.zAccel*gravity.zAccel));
+                                Math.sqrt(gravity.xAccel * gravity.xAccel
+                                        + gravity.yAccel * gravity.yAccel
+                                        + gravity.zAccel * gravity.zAccel));
                     }
                 });
     }
+
+    public void strobeGreen_Black() {
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_GREEN);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_GREEN);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_GREEN);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_GREEN);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_GREEN);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+        sleep(200);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_GREEN);
+        sleep(200);
+    }
+
+
+
+
+
 
     //----------------------------------------------------------------------------------------------
     // Formatting
