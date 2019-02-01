@@ -160,6 +160,16 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
         telemetry.addData("Ready to run","");
         telemetry.update();
+        if (getBatteryVoltage() < 13.1) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
+            telemetry.addData("Status, Put me up", "CHANGE BATTERY SOON");
+            telemetry.update();
+        }
+        if (getBatteryVoltage() < 12.9) {
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+            telemetry.addData("CHANGE BATTERY NOW","Status, Put me up");
+            telemetry.update();
+        }
 
         waitForStart();
 
@@ -168,11 +178,12 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         LowerIntake();
 
         vuforia.setDogeCVDetector(detector);
-        vuforia.enableDogeCV();
+        vuforia.disableDogeCV();
         vuforia.showDebug();
         vuforia.start();
 
         LowerFromLander();
+        sleep(1000);
 
         ResetIntake();
 
@@ -194,7 +205,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
             BrakeDrivetrain();
 
-            LeftGyroTurn(86, 0.6);
+            LeftGyroTurn(88, 0.6);
         }
         else if (mineral == 2) {
             //Center
@@ -226,24 +237,28 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
             BrakeDrivetrain();
 
-            LeftGyroTurn(88, 0.6);
+            LeftGyroTurn(88, 0.45);
         }
 
         DriveForward(1000,0.8);
 
-        DistanceSensorDriveForward(7);
+        DistanceSensorDriveForward(8);
 
         LeftGyroTurn(140,0.4);
 
-        LeftGyroTurn(173.6,0.33);
+        LeftGyroTurn(171.6,0.33);
 
         DriveForwardSkew(4920,0.68,5000, 0.7);
 
         DropMarker();
 
-        LeftGyroTurn(177,0.3);
+        LeftGyroTurn(178.8,0.44);
 
-        DriveBackwardSkew(-5950,-0.63,-6050, -0.65);
+        DriveBackwardSkew(-5900,-0.55,-6050, -0.57);
+
+        lynchpin.setTargetPosition(0);
+        lynchpin.setPower(0.5);
+        while (lynchpin.isBusy() & opModeIsActive()){}
 
         stop();
     }
@@ -411,7 +426,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
     public void DistanceSensorDrivskew(double inches) {
         leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        while ((rangeSensor.cmUltrasonic() / 2.54) - 8 > inches) {
+        while ((rangeSensor.cmUltrasonic() / 2.54) -33 > inches) {
             leftDrive.setPower(-0.6);
             rightDrive.setPower(-0.57);
         }
@@ -429,23 +444,25 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         }
     }
     public void DriveForwardSkew(int leftDistance, double leftSpeed, int rightDistance, double rightSpeed) {
-        while (rangeSensor.cmUltrasonic() / 2.54 > 20) {
+        while (rangeSensor.cmUltrasonic() / 2.54 > 24 & distanceSensorRight.getDistance(DistanceUnit.INCH) > 28) {
             leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
             rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
             leftDrive.setPower(leftSpeed);
             rightDrive.setPower(rightSpeed);
-            while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-            }
         }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+
     }
     public void DriveBackwardSkew(int leftDistance, double leftSpeed, int rightDistance, double rightSpeed) {
-
-        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
-        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
-        leftDrive.setPower(leftSpeed);
-        rightDrive.setPower(rightSpeed);
-        while (leftDrive.isBusy() & rightDrive.isBusy() & opModeIsActive()) {
-        }
+       while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 6.5) {
+           leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
+           rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
+           leftDrive.setPower(leftSpeed);
+           rightDrive.setPower(rightSpeed);
+       }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
     }
     public void DriveBackwards(int distance, double speed) {
         leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + distance);
@@ -564,6 +581,8 @@ public class Crater_Autonomous_2 extends LinearOpMode {
     //Standard Functions
     public void LowerFromLander() {
 
+        vuforia.enableDogeCV();
+
         lynchpin.setPower(1);
         liftMotor.setPower(-0.8);
         lynchpin.setTargetPosition(525);
@@ -580,7 +599,6 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
 
-        sleep(700);
         if (detector.isFound()) {
             if (detector.getXPosition() < 250) {
                 telemetry.addData("Right", detector.getXPosition());
@@ -646,10 +664,11 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
         intakeFold.setTargetPosition(800);
+        intakeFold.setPower(0.7);
         while (intakeFold.isBusy() & opModeIsActive()) {
         }
 
-        sweeperMotor.setPower(-1);
+        sweeperMotor.setPower(1);
         sleep(400);
 
         ResetIntake();
@@ -703,38 +722,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
-    public void DriveToDepot(double speed) {
-        SetModePowerDrive();
-        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 31) {
 
-            while (distanceSensorRight.getDistance(DistanceUnit.INCH) > 5) {
-                leftDrive.setPower(-speed);
-                rightDrive.setPower(-speed + 0.1);
-            }
-            while (distanceSensorRight.getDistance(DistanceUnit.INCH) < 5) {
-                leftDrive.setPower(-speed);
-                rightDrive.setPower(-speed + 0.1);
-            }
-        }
-        SetModeRUN_TO_POSITION();
-
-    }
-    public void DriveToCrater(double speed) {
-        SetModePowerDrive();
-        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 34) {
-
-            if (distanceSensorRight.getDistance(DistanceUnit.INCH) > 5) {
-                leftDrive.setPower(speed);
-                rightDrive.setPower(speed - 0.1);
-            }
-            if (distanceSensorRight.getDistance(DistanceUnit.INCH) < 5) {
-                leftDrive.setPower(speed);
-                rightDrive.setPower(speed - 0.1);
-            }
-        }
-        SetModeRUN_TO_POSITION();
-
-    }
 
     //Gyro Methods
     public void resetGyro() {

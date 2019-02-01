@@ -151,7 +151,7 @@ public class TeleOp extends LinearOpMode {
                }
 
                if (gamepad1.y) {
-                   intakeFold.setTargetPosition(160);
+                   intakeFold.setTargetPosition(120);
                    intakeFold.setPower(1);
                }
 
@@ -180,7 +180,7 @@ public class TeleOp extends LinearOpMode {
                if (gamepad2.start) {
                    liftMotor.setTargetPosition(liftMotor.getCurrentPosition() - 200);
                    liftMotor.setPower(0.4);
-                   blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_BEATS_PER_MINUTE);
+
                }
 
                //brings lift up half-way
@@ -188,8 +188,20 @@ public class TeleOp extends LinearOpMode {
                    liftMotor.setTargetPosition(3700);
                    liftMotor.setPower(1);
                    blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
+                   if (ledspam){
+                       ledspam = false;
+                   }
                    ledspam = true;
 
+
+               }
+               //Does the hype
+               if (gamepad2.dpad_right) {
+                   craterArmServo.setPosition(.37);
+               }
+               //also does the hype
+               if(gamepad2.dpad_left) {
+                   craterArmServo.setPosition(0);
                }
                //brings lift to the bottom of the slide
 
@@ -203,11 +215,8 @@ public class TeleOp extends LinearOpMode {
                if (gamepad2.b) {
                    liftMotor.setTargetPosition(liftMotor.getCurrentPosition() + 200);
                    liftMotor.setPower(0.4);
-                   blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_BEATS_PER_MINUTE);
-               } //Fail Safe
-
-               //Activates the sweeper motor to suck in minerals
-
+               }
+               //Fail Safe
                if (gamepad2.left_bumper) {
                    leftLiftServo.setPosition(0);
                    rightLiftServo.setPosition(1);
