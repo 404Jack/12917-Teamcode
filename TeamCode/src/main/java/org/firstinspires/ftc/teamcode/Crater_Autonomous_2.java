@@ -62,7 +62,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 import java.util.Locale;
 
-@Autonomous(name="Crater Side Autonomous 2", group="DogeCV")
+@Autonomous(name="Crater Side Autonomous", group="DogeCV")
 
 public class Crater_Autonomous_2 extends LinearOpMode {
     // Detector object
@@ -177,6 +177,9 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
         LowerIntake();
 
+        leftLiftServo.setPosition(0);
+        rightLiftServo.setPosition(1);
+
         vuforia.setDogeCVDetector(detector);
         vuforia.disableDogeCV();
         vuforia.showDebug();
@@ -205,7 +208,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
             BrakeDrivetrain();
 
-            LeftGyroTurn(88, 0.6);
+            LeftGyroTurn(86.7, 0.5);
         }
         else if (mineral == 2) {
             //Center
@@ -221,11 +224,11 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
             BrakeDrivetrain();
 
-            LeftGyroTurn(86, 0.6);
+            LeftGyroTurn(86, 0.45);
 
         } else if (mineral == 3) {
             //Left
-            LeftGyroTurn(73, 0.4);
+            LeftGyroTurn(71.5, 0.4);
 
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
@@ -237,7 +240,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
             BrakeDrivetrain();
 
-            LeftGyroTurn(88, 0.45);
+            LeftGyroTurn(86.5, 0.6);
         }
 
         DriveForward(1000,0.8);
@@ -252,7 +255,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
         DropMarker();
 
-        LeftGyroTurn(178.8,0.44);
+        LeftGyroTurn(179,0.35);
 
         DriveBackwardSkew(-5900,-0.55,-6050, -0.57);
 
@@ -455,7 +458,7 @@ public class Crater_Autonomous_2 extends LinearOpMode {
 
     }
     public void DriveBackwardSkew(int leftDistance, double leftSpeed, int rightDistance, double rightSpeed) {
-       while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 6.5) {
+       while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 4.75) {
            leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
            rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
            leftDrive.setPower(leftSpeed);

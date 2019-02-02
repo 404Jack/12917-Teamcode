@@ -111,6 +111,9 @@ public class TeleOp extends LinearOpMode {
 
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
 
+        leftLiftServo.setPosition(0);
+        rightLiftServo.setPosition(1);
+
         waitForStart();
 
 
@@ -127,7 +130,7 @@ public class TeleOp extends LinearOpMode {
                rightPower = gamepad1.left_stick_y;
                //Activates sweeper motor to spit out minerals
                if (gamepad1.b) {
-                   sweeperMotor.setPower(0.6);
+                   sweeperMotor.setPower(1);
                } else {
                    sweeperMotor.setPower(0);
                }
@@ -151,8 +154,9 @@ public class TeleOp extends LinearOpMode {
                }
 
                if (gamepad1.y) {
-                   intakeFold.setTargetPosition(120);
+                   intakeFold.setTargetPosition(140);
                    intakeFold.setPower(1);
+
                }
 
            /* if (gamepad1.left_bumper) {
@@ -173,6 +177,8 @@ public class TeleOp extends LinearOpMode {
                if (gamepad2.y) {
                    liftMotor.setTargetPosition(7300);
                    liftMotor.setPower(1);
+                   leftLiftServo.setPosition(0.15);
+                   rightLiftServo.setPosition(0.95);
                    blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
                    ledspam = false;
                }

@@ -62,7 +62,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 import java.util.Locale;
 
-@Autonomous(name="Depot Side Autonomous 2", group="DogeCV")
+@Autonomous(name="Depot Side Autonomous", group="DogeCV")
 
 public class Depot_Autonomous_2 extends LinearOpMode
 {
@@ -179,6 +179,9 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         LowerIntake();
 
+        leftLiftServo.setPosition(0);
+        rightLiftServo.setPosition(1);
+
         vuforia.setDogeCVDetector(detector);
         vuforia.disableDogeCV();
         vuforia.showDebug();
@@ -207,7 +210,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
             BrakeDrivetrain();
 
-            LeftGyroTurn(88, 0.6);
+            LeftGyroTurn(86.7, 0.5);
         }
         else if (mineral == 2) {
             //Center
@@ -227,7 +230,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
         } else if (mineral == 3) {
             //Left
-            LeftGyroTurn(73, 0.4);
+            LeftGyroTurn(71.5, 0.4);
 
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
@@ -239,24 +242,22 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
             BrakeDrivetrain();
 
-            LeftGyroTurn(88, 0.6);
+            LeftGyroTurn(86.5, 0.6);
         }
 
         DriveForward(1000,0.8);
 
-        DistanceSensorDriveForward(6.5);
+        DistanceSensorDriveForward(7);
 
-        RightGyroTurn(40,0.4);
+        RightGyroTurn(-6.5,0.35);
 
-        RightGyroTurn(5,0.33);
-
-        DriveForwardSkew(4920,0.68,5000, 0.7);
+        DriveForwardSkew(5000,0.7,4920, 0.68);
 
         DropMarker();
 
-        RightGyroTurn(5,0.33);
+        RightGyroTurn(-1,0.35);
 
-        DriveBackwardSkew(-9800,-0.78,-10000, -0.8);
+        DriveBackwardSkew(-8500,-0.65,-8750, -0.67);
 
         stop();
 }
@@ -336,7 +337,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
         }
     }
     public void DriveForwardSkew(int leftDistance, double leftSpeed, int rightDistance, double rightSpeed) {
-        while (rangeSensor.cmUltrasonic() / 2.54 > 28 & distanceSensorRight.getDistance(DistanceUnit.INCH) > 28) {
+        while (rangeSensor.cmUltrasonic() / 2.54 > 24 & distanceSensorRight.getDistance(DistanceUnit.INCH) > 28) {
             leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
             rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
             leftDrive.setPower(leftSpeed);
@@ -347,7 +348,7 @@ public class Depot_Autonomous_2 extends LinearOpMode
 
     }
     public void DriveBackwardSkew(int leftDistance, double leftSpeed, int rightDistance, double rightSpeed) {
-        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 6.5) {
+        while (distanceSensorLeft.getDistance(DistanceUnit.INCH) > 5.75) {
             leftDrive.setTargetPosition(leftDrive.getCurrentPosition() - leftDistance);
             rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - rightDistance);
             leftDrive.setPower(leftSpeed);
@@ -535,20 +536,16 @@ public class Depot_Autonomous_2 extends LinearOpMode
     public void DropMarker() {
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD);
 
-        intakeFold.setTargetPosition(500);
+        intakeFold.setTargetPosition(800);
+        intakeFold.setPower(0.7);
         while (intakeFold.isBusy() & opModeIsActive()) {
         }
 
-        leftLiftServo.setPosition(0.7);
-        rightLiftServo.setPosition(0.3);
-        sleep(1600);
-
-        leftLiftServo.setPosition(0);
-        rightLiftServo.setPosition(1);
-        sleep(700);
+        sweeperMotor.setPower(1);
+        sleep(400);
 
         ResetIntake();
-
+        sweeperMotor.setPower(0);
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_TWINKLES);
     }
     public void ResetIntake() {
@@ -615,7 +612,54 @@ public class Depot_Autonomous_2 extends LinearOpMode
         leftDrive.setPower(0);
         rightDrive.setPower(0);
     }
+    public void NegativeLeftGyroTurn(double degrees, double speed) {
 
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > degrees && opModeIsActive()) {
+            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 50);
+            rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 50);
+            leftDrive.setPower(speed);
+            rightDrive.setPower(-speed);
+
+            telemetry.addData("heading", new Func<String>() {
+                @Override
+                public String value() {
+                    return formatAngle(angles.angleUnit, angles.firstAngle);
+                }
+            });
+            telemetry.update();
+
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+    }
+    public void RightSpinTurn(double degrees, double speed) {
+        leftDrive.setTargetPosition(leftDrive.getCurrentPosition() + 8000);
+        rightDrive.setTargetPosition(rightDrive.getCurrentPosition() - 8000);
+        leftDrive.setPower(speed);
+        rightDrive.setPower(speed);
+        while (AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) > degrees && leftDrive.isBusy() && rightDrive.isBusy() && opModeIsActive()) {
+            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+
+            telemetry.addData("heading", new Func<String>() {
+                @Override
+                public String value() {
+                    return formatAngle(angles.angleUnit, angles.firstAngle);
+                }
+            });
+            telemetry.update();
+
+        }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+    }
+    public void ResetGyro() {
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 50);
+        sleep(1000);
+        imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+    }
 
     //Mode set Protocols
     public void SetModeRUN_TO_POSITION() {
